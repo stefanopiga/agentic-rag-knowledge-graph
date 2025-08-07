@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Medical/Healthcare Theme */
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary: #059669;
+    --accent: #dc2626;
+    
+    /* Neutral Colors */
+    --background: #fafafa;
+    --surface: #ffffff;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --border: #e5e7eb;
+    
+    /* Status Colors */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+  }
+
+  body {
+    @apply font-[Inter,Helvetica_Neue,sans-serif] text-text-primary bg-background;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-text-primary;
+  }
+}
+
+@layer components {
+  .text-medical {
+    font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+
+  .text-heading {
+    @apply font-semibold text-text-primary;
+  }
+
+  .text-body {
+    @apply font-normal text-text-primary;
+  }
+
+  .text-caption {
+    @apply text-sm text-text-secondary;
+  }
+
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary/90 text-white font-medium py-2 px-4 rounded-lg transition-colors;
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-lg p-6 shadow-sm;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+}
