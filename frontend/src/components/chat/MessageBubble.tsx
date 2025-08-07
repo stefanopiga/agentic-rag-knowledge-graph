@@ -67,7 +67,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* Tool calls (only for assistant messages) */}
             {!isUser && message.toolCalls && message.toolCalls.length > 0 && (
               <div className="mt-3 space-y-2">
-                {message.toolCalls.map((toolCall, index: number) => (
+                {message.toolCalls.map((toolCall, index) => (
                   <div
                     key={index}
                     className="bg-background rounded-lg p-3 border border-border"
