@@ -4,7 +4,7 @@
 
 Questa guida fornisce istruzioni strategiche per Agent OS su come navigare la documentazione del progetto FisioRAG **COMPLETAMENTE MODERNIZZATO** con stack UV + PNPM + BUN.
 
-**🚀 STATUS PROGETTO**: **100% COMPLETO** - Milestone 4 (Modern Tooling Migration) **COMPLETATA**
+**🚀 STATUS PROGETTO**: **100% COMPLETO** - Milestone 4 (Modern Tooling Migration) **COMPLETATA**. PR aperti verso `main`: #7, #8, #9.
 
 ---
 

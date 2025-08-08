@@ -6,6 +6,11 @@
 
 ### 🎯 **Files Prioritari da Leggere**
 
+PR aperti verso `main`:
+- #7 docker-modernization → main
+- #8 scalability-testing → main
+- #9 security-hardening → main
+
 1. **`.agent-os/project-status.md`** → **STATUS CORRENTE COMPLETO**
 
    - Milestone progress (3/4 completate)
@@ -257,3 +262,34 @@ pnpm dev  # Frontend + Backend + Hot reload
 ---
 
 _Documentazione aggiornata: 2025-01-19 - Milestone 4 in corso_
+
+---
+
+## 🚀 Quick Start (Aggiornato 2025-08-08)
+
+### 0) Ambiente (.env)
+- Usa il tuo `env.txt` come base per `.env`
+- Se lavori con Docker Compose, adatta solo gli host:
+  - `DATABASE_URL=postgresql+asyncpg://rag_user:rag_password@postgres:5432/rag_db`
+  - `NEO4J_URI=bolt://neo4j:7687`
+  - `REDIS_URL=redis://redis:6379/0`
+- Mantieni tutte le altre variabili (LLM, chunking, ecc.)
+
+### 1) Avvio backend + DB (Compose)
+```powershell
+docker compose up -d
+curl http://localhost:8000/health
+curl http://localhost:8000/health/detailed
+```
+
+### 2) Avvio UI (Vite)
+```powershell
+$env:VITE_API_URL='http://localhost:8000'
+pnpm --filter frontend dev
+# UI: http://localhost:5173
+```
+
+Note
+- Il container `app` espone l’API FastAPI su `http://localhost:8000`
+- La UI in dev gira su `http://localhost:5173` e usa `VITE_API_URL`
+- `.env.example` è solo un template; `.env` contiene i tuoi segreti
