@@ -17,12 +17,14 @@ This testing suite provides enterprise-grade scalability testing with:
 ### 1. Install Dependencies
 
 ```bash
-# Install Python dependencies
-cd load_testing
-pip install -r requirements.txt
+# Install load testing dependencies with UV (10-100x faster than pip)
+uv pip install --extra load_testing -e .
 
-# Install system dependencies
-npm install -g locust
+# Or install specific load testing tools
+uv pip install locust psutil plotly faker pytest-benchmark
+
+# For global Locust installation (optional)
+uv tool install locust
 ```
 
 ### 2. Configure Environment
@@ -39,46 +41,51 @@ export REDIS_URL="redis://localhost:6379/0"
 ### 3. Run Tests
 
 ```bash
-# Quick baseline test (5 minutes)
-python run_scalability_tests.py --quick
+# Quick baseline test (5 minutes) - using UV
+uv run python load_testing/run_scalability_tests.py --quick
 
 # Peak hours simulation (15 minutes)
-python run_scalability_tests.py --peak
+uv run python load_testing/run_scalability_tests.py --peak
 
 # Comprehensive stress test (30 minutes)
-python run_scalability_tests.py --stress
+uv run python load_testing/run_scalability_tests.py --stress
 
 # Full production readiness suite (2-3 hours)
-python run_scalability_tests.py --full-suite
+uv run python load_testing/run_scalability_tests.py --full-suite
 ```
 
 ## Test Scenarios
 
 ### 1. Baseline Test
+
 - **Duration**: 5 minutes
 - **Users**: 10 concurrent
 - **Purpose**: Establish performance baseline
 - **Use Case**: Development and CI/CD validation
 
 ### 2. Peak Hours Simulation
+
 - **Duration**: 15 minutes
 - **Users**: 50 concurrent (gradual ramp)
 - **Purpose**: Simulate university exam periods
 - **Use Case**: Capacity planning for peak usage
 
 ### 3. Stress Test
+
 - **Duration**: 30 minutes
 - **Users**: 200 concurrent
 - **Purpose**: Find system breaking points
 - **Use Case**: Reliability and failure mode analysis
 
 ### 4. Spike Test
+
 - **Duration**: 10 minutes
 - **Users**: 100 concurrent (rapid spike)
 - **Purpose**: Test sudden traffic increases
 - **Use Case**: Social media traffic or viral content
 
 ### 5. Endurance Test
+
 - **Duration**: 60+ minutes
 - **Users**: 30 concurrent
 - **Purpose**: Long-term stability testing
@@ -92,11 +99,12 @@ Realistic user behavior simulation with:
 
 ```python
 # Student users (60% - educational queries)
-# Professional users (30% - clinical questions)  
+# Professional users (30% - clinical questions)
 # Researcher users (10% - evidence-based queries)
 ```
 
 **Test Patterns:**
+
 - Clinical question asking (30% of actions)
 - Follow-up questions (15% of actions)
 - Streaming conversations (10% of actions)
@@ -116,18 +124,21 @@ Real-time metrics collection:
 Concurrent testing of all databases:
 
 **PostgreSQL:**
+
 - Vector similarity searches
 - Complex joins and aggregations
 - Write-heavy operations
 - Connection pool stress
 
 **Neo4j:**
+
 - Graph traversal queries
 - Relationship creation/updates
 - Complex Cypher patterns
 - Memory-intensive operations
 
 **Redis:**
+
 - Cache read/write patterns
 - Session management simulation
 - Queue operations
@@ -164,23 +175,27 @@ Run individual test components:
 
 ```bash
 # Performance monitoring only
-python performance_monitor.py
+uv run python load_testing/performance_monitor.py
 
 # Database stress testing only
-python database_stress_test.py
+uv run python load_testing/database_stress_test.py
 
-# Locust load testing only
-locust -f locustfile.py --host http://localhost:8000
+# Locust load testing only (with UV environment)
+uv run locust -f load_testing/locustfile.py --host http://localhost:8000
 ```
 
 ### CI/CD Integration
 
 ```yaml
-# GitHub Actions example
+# GitHub Actions example with UV
+- name: Setup UV
+  uses: astral-sh/setup-uv@v6
+  
+- name: Install dependencies
+  run: uv pip install --extra load_testing -e .
+  
 - name: Run Scalability Tests
-  run: |
-    cd load_testing
-    python run_scalability_tests.py --quick
+  run: uv run python load_testing/run_scalability_tests.py --quick
   env:
     LOAD_TEST_API_URL: ${{ secrets.API_URL }}
     DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -192,7 +207,7 @@ locust -f locustfile.py --host http://localhost:8000
 
 ```python
 response_time_p95_threshold: 2.0    # seconds
-response_time_p99_threshold: 5.0    # seconds  
+response_time_p99_threshold: 5.0    # seconds
 error_rate_threshold: 0.01          # 1%
 throughput_threshold: 100.0         # requests/second
 ```
@@ -272,6 +287,7 @@ total_requests.inc(request_count)
 ### Common Issues
 
 **High Error Rates:**
+
 ```bash
 # Check API logs
 docker logs fisiorag-api
@@ -281,6 +297,7 @@ python -c "from config import LoadTestConfig; import asyncio; asyncio.run(LoadTe
 ```
 
 **Resource Exhaustion:**
+
 ```bash
 # Monitor system resources
 top -p $(pgrep -f "python.*locust")
@@ -290,6 +307,7 @@ docker exec fisiorag-postgres psql -c "SELECT count(*) FROM pg_stat_activity;"
 ```
 
 **Test Failures:**
+
 ```bash
 # Enable verbose logging
 python run_scalability_tests.py --quick --verbose
@@ -302,16 +320,19 @@ python database_stress_test.py
 ### Performance Optimization
 
 **Database Tuning:**
+
 - Increase connection pool sizes
 - Optimize query indexes
 - Tune database configuration
 
 **Application Tuning:**
+
 - Enable response caching
 - Optimize AI model inference
 - Implement request rate limiting
 
 **Infrastructure Scaling:**
+
 - Horizontal API scaling
 - Database read replicas
 - CDN for static content
@@ -356,7 +377,7 @@ python database_stress_test.py
 # Daily baseline tests
 0 2 * * * cd /app/load_testing && python run_scalability_tests.py --quick
 
-# Weekly comprehensive tests  
+# Weekly comprehensive tests
 0 1 * * 0 cd /app/load_testing && python run_scalability_tests.py --stress
 ```
 

@@ -242,10 +242,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_scalability_tests.py --quick          # 5-minute baseline test
-  python run_scalability_tests.py --peak           # 15-minute peak hours test
-  python run_scalability_tests.py --stress         # 30-minute stress test
-  python run_scalability_tests.py --full-suite     # Complete 2-3 hour suite
+  uv run python load_testing/run_scalability_tests.py --quick          # 5-minute baseline test
+  uv run python load_testing/run_scalability_tests.py --peak           # 15-minute peak hours test
+  uv run python load_testing/run_scalability_tests.py --stress         # 30-minute stress test
+  uv run python load_testing/run_scalability_tests.py --full-suite     # Complete 2-3 hour suite
   
 Environment Variables:
   LOAD_TEST_API_URL     - Target API URL (default: http://localhost:8000)
@@ -318,6 +318,10 @@ Environment Variables:
         print(f"\n✅ Testing completed successfully!")
         print(f"📊 Results saved in: load_testing/results/")
         print(f"📝 Logs saved in: {log_file}")
+        print(f"\n💡 Next steps:")
+        print(f"   • Review HTML reports in load_testing/results/")
+        print(f"   • Analyze performance metrics JSON files")
+        print(f"   • Use: uv run python load_testing/run_scalability_tests.py --help for more options")
         
         return 0
         
