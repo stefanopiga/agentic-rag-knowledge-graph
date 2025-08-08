@@ -1,0 +1,21 @@
+# UV Configuration for automatic tool detection
+# This file ensures UV is used by default for Python operations
+
+# UV settings
+UV_PYTHON_PREFERENCE=managed
+UV_INDEX_STRATEGY=unsafe-best-match
+UV_RESOLUTION=highest
+
+# Python version management
+UV_PYTHON_DOWNLOADS=automatic
+
+# Development settings
+UV_PROJECT_ENVIRONMENT=.venv
+UV_CACHE_DIR=.uv-cache
+
+# Performance optimizations
+UV_CONCURRENT_DOWNLOADS=8
+UV_CONCURRENT_BUILDS=4
+
+# Lock file generation
+UV_GENERATE_LOCKFILE_FOR_SOURCES=true

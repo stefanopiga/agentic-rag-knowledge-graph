@@ -26,8 +26,10 @@ from .db_utils import (
     get_session,
     add_message,
     get_session_messages,
-    test_connection
+    test_connection,
+    get_database_status
 )
+from .cache_manager import initialize_cache, close_cache, cache_manager
 from .graph_utils import initialize_graph, close_graph, test_graph_connection
 from .models import (
     ChatRequest,
@@ -87,14 +89,21 @@ async def lifespan(app: FastAPI):
         await initialize_graph()
         logger.info("Graph database initialized")
         
+        # Initialize cache
+        await initialize_cache()
+        logger.info("Cache manager initialized")
+        
         # Test connections
         db_ok = await test_connection()
         graph_ok = await test_graph_connection()
+        cache_ok = (await cache_manager.health_check()).get("status") == "healthy"
         
         if not db_ok:
             logger.error("Database connection failed")
         if not graph_ok:
             logger.error("Graph database connection failed")
+        if not cache_ok:
+            logger.error("Cache connection failed")
         
         logger.info("Agentic RAG API startup complete")
         
@@ -110,6 +119,7 @@ async def lifespan(app: FastAPI):
     try:
         await close_database()
         await close_graph()
+        await close_cache()
         logger.info("Connections closed")
     except Exception as e:
         logger.error(f"Shutdown error: {e}")
@@ -362,11 +372,13 @@ async def health_check():
         # Test database connections
         db_status = await test_connection()
         graph_status = await test_graph_connection()
+        cache_health = await cache_manager.health_check()
+        cache_status = cache_health.get("status") == "healthy"
         
         # Determine overall status
-        if db_status and graph_status:
+        if db_status and graph_status and cache_status:
             status = "healthy"
-        elif db_status or graph_status:
+        elif (db_status and graph_status) or (db_status and cache_status) or (graph_status and cache_status):
             status = "degraded"
         else:
             status = "unhealthy"
@@ -383,6 +395,23 @@ async def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=500, detail="Health check failed")
+
+
+@app.get("/status/database")
+async def database_status():
+    """Get detailed database status and metrics."""
+    try:
+        status = await get_database_status()
+        cache_health = await cache_manager.health_check()
+        
+        return {
+            "database": status,
+            "cache": cache_health,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Database status check failed: {e}")
+        raise HTTPException(status_code=500, detail="Database status check failed")
 
 
 @app.post("/chat", response_model=ChatResponse)
