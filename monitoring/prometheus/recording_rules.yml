@@ -1,0 +1,148 @@
+# Recording rules for FisioRAG monitoring
+groups:
+  # Application Performance Recording Rules
+  - name: fisiorag.performance.rules
+    interval: 30s
+    rules:
+      # Request rate per minute
+      - record: fisiorag:request_rate_1m
+        expr: rate(fisiorag_requests_total[1m])
+
+      # Request rate per 5 minutes
+      - record: fisiorag:request_rate_5m
+        expr: rate(fisiorag_requests_total[5m])
+
+      # Error rate percentage
+      - record: fisiorag:error_rate_5m
+        expr: rate(fisiorag_requests_total{status=~"5.."}[5m]) / rate(fisiorag_requests_total[5m]) * 100
+
+      # Response time percentiles
+      - record: fisiorag:response_time_p50
+        expr: histogram_quantile(0.50, rate(fisiorag_request_duration_seconds_bucket[5m]))
+
+      - record: fisiorag:response_time_p95
+        expr: histogram_quantile(0.95, rate(fisiorag_request_duration_seconds_bucket[5m]))
+
+      - record: fisiorag:response_time_p99
+        expr: histogram_quantile(0.99, rate(fisiorag_request_duration_seconds_bucket[5m]))
+
+  # RAG Query Performance
+  - name: fisiorag.rag.rules
+    interval: 30s
+    rules:
+      # RAG query rate
+      - record: fisiorag:rag_query_rate_5m
+        expr: rate(fisiorag_rag_queries_total[5m])
+
+      # RAG query success rate
+      - record: fisiorag:rag_query_success_rate_5m
+        expr: rate(fisiorag_rag_queries_total{status="success"}[5m]) / rate(fisiorag_rag_queries_total[5m]) * 100
+
+      # RAG query latency percentiles
+      - record: fisiorag:rag_query_latency_p95
+        expr: histogram_quantile(0.95, rate(fisiorag_rag_query_duration_seconds_bucket[5m]))
+
+      # Vector search performance
+      - record: fisiorag:vector_search_rate_5m
+        expr: rate(fisiorag_vector_search_total[5m])
+
+      - record: fisiorag:vector_search_latency_p95
+        expr: histogram_quantile(0.95, rate(fisiorag_vector_search_duration_seconds_bucket[5m]))
+
+      # Graph query performance
+      - record: fisiorag:graph_query_rate_5m
+        expr: rate(fisiorag_graph_queries_total[5m])
+
+      - record: fisiorag:graph_query_latency_p95
+        expr: histogram_quantile(0.95, rate(fisiorag_graph_query_duration_seconds_bucket[5m]))
+
+  # LLM Performance
+  - name: fisiorag.llm.rules
+    interval: 60s
+    rules:
+      # LLM request rate
+      - record: fisiorag:llm_request_rate_5m
+        expr: rate(fisiorag_llm_requests_total[5m])
+
+      # LLM success rate
+      - record: fisiorag:llm_success_rate_5m
+        expr: rate(fisiorag_llm_requests_total{status="success"}[5m]) / rate(fisiorag_llm_requests_total[5m]) * 100
+
+      # LLM latency
+      - record: fisiorag:llm_latency_p95
+        expr: histogram_quantile(0.95, rate(fisiorag_llm_request_duration_seconds_bucket[5m]))
+
+      # Token consumption rate
+      - record: fisiorag:token_consumption_rate_5m
+        expr: rate(fisiorag_llm_tokens_total[5m])
+
+  # Database Performance
+  - name: fisiorag.database.rules
+    interval: 30s
+    rules:
+      # Database query rate
+      - record: fisiorag:db_query_rate_5m
+        expr: rate(fisiorag_db_queries_total[5m])
+
+      # Database query success rate
+      - record: fisiorag:db_query_success_rate_5m
+        expr: rate(fisiorag_db_queries_total{status="success"}[5m]) / rate(fisiorag_db_queries_total[5m]) * 100
+
+      # Database connection utilization
+      - record: fisiorag:db_connection_utilization
+        expr: fisiorag_db_connections_active / 20 * 100  # Assuming max 20 connections
+
+  # Cache Performance
+  - name: fisiorag.cache.rules
+    interval: 30s
+    rules:
+      # Cache hit rate
+      - record: fisiorag:cache_hit_rate_5m
+        expr: rate(fisiorag_cache_operations_total{result="hit"}[5m]) / rate(fisiorag_cache_operations_total{operation="get"}[5m]) * 100
+
+      # Cache operation rate
+      - record: fisiorag:cache_operation_rate_5m
+        expr: rate(fisiorag_cache_operations_total[5m])
+
+  # Business Metrics
+  - name: fisiorag.business.rules
+    interval: 60s
+    rules:
+      # Active sessions trend
+      - record: fisiorag:active_sessions_avg_10m
+        expr: avg_over_time(fisiorag_sessions_active[10m])
+
+      # Document processing rate
+      - record: fisiorag:document_processing_rate_5m
+        expr: rate(fisiorag_documents_processed_total[5m])
+
+      # Document processing success rate
+      - record: fisiorag:document_processing_success_rate_5m
+        expr: rate(fisiorag_documents_processed_total{status="success"}[5m]) / rate(fisiorag_documents_processed_total[5m]) * 100
+
+      # Medical entity extraction rate
+      - record: fisiorag:medical_entity_extraction_rate_5m
+        expr: rate(fisiorag_medical_entities_extracted_total[5m])
+
+  # Infrastructure Health
+  - name: fisiorag.infrastructure.rules
+    interval: 30s
+    rules:
+      # CPU utilization
+      - record: fisiorag:cpu_utilization
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+      # Memory utilization
+      - record: fisiorag:memory_utilization
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+
+      # Disk utilization
+      - record: fisiorag:disk_utilization
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100
+
+      # Network throughput
+      - record: fisiorag:network_receive_rate
+        expr: rate(node_network_receive_bytes_total[5m])
+
+      - record: fisiorag:network_transmit_rate
+        expr: rate(node_network_transmit_bytes_total[5m])

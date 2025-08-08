@@ -12,11 +12,12 @@ from datetime import datetime
 import uuid
 
 from fastapi import FastAPI, HTTPException, Request, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
 from dotenv import load_dotenv
+from prometheus_client import generate_latest
 
 from .agent import rag_agent, AgentDependencies
 from .db_utils import (
@@ -41,6 +42,15 @@ from .models import (
     HealthStatus,
     ToolCall
 )
+from .monitoring import (
+    setup_monitoring,
+    MonitoringMiddleware,
+    track_rag_query,
+    track_vector_search,
+    track_graph_query,
+    get_detailed_health_status,
+    update_connection_metrics
+)
 from .tools import (
     vector_search_tool,
     graph_search_tool,
@@ -62,6 +72,8 @@ APP_ENV = os.getenv("APP_ENV", "development")
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", 8000))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+ENABLE_METRICS = os.getenv("ENABLE_METRICS", "true").lower() == "true"
+METRICS_PORT = int(os.getenv("METRICS_PORT", 9090))
 
 # Configure logging
 logging.basicConfig(
@@ -107,6 +119,11 @@ async def lifespan(app: FastAPI):
         
         logger.info("Agentic RAG API startup complete")
         
+        # Expose metrics endpoint if enabled
+        if ENABLE_METRICS and instrumentator:
+            instrumentator.expose(app, endpoint="/metrics")
+            logger.info(f"Metrics endpoint exposed at /metrics")
+        
     except Exception as e:
         logger.error(f"Startup failed: {e}")
         raise
@@ -143,6 +160,12 @@ app.add_middleware(
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Add monitoring middleware
+app.add_middleware(MonitoringMiddleware)
+
+# Setup monitoring and metrics
+instrumentator = setup_monitoring(app, enable_metrics=ENABLE_METRICS)
 
 
 # Helper functions for agent execution
@@ -375,6 +398,9 @@ async def health_check():
         cache_health = await cache_manager.health_check()
         cache_status = cache_health.get("status") == "healthy"
         
+        # Update connection metrics
+        update_connection_metrics()
+        
         # Determine overall status
         if db_status and graph_status and cache_status:
             status = "healthy"
@@ -395,6 +421,28 @@ async def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=500, detail="Health check failed")
+
+
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Detailed health check with metrics information."""
+    try:
+        return await get_detailed_health_status()
+    except Exception as e:
+        logger.error(f"Detailed health check failed: {e}")
+        raise HTTPException(status_code=500, detail="Detailed health check failed")
+
+
+@app.get("/metrics")
+async def get_metrics():
+    """Prometheus metrics endpoint."""
+    if not ENABLE_METRICS:
+        raise HTTPException(status_code=404, detail="Metrics disabled")
+    
+    return PlainTextResponse(
+        generate_latest(),
+        media_type="text/plain; version=0.0.4; charset=utf-8"
+    )
 
 
 @app.get("/status/database")
@@ -552,6 +600,7 @@ async def chat_stream(request: ChatRequest):
 
 
 @app.post("/search/vector")
+@track_vector_search()
 async def search_vector(request: SearchRequest):
     """Vector search endpoint."""
     try:
@@ -579,6 +628,7 @@ async def search_vector(request: SearchRequest):
 
 
 @app.post("/search/graph")
+@track_graph_query()
 async def search_graph(request: SearchRequest):
     """Knowledge graph search endpoint."""
     try:
@@ -605,6 +655,7 @@ async def search_graph(request: SearchRequest):
 
 
 @app.post("/search/hybrid")
+@track_rag_query(query_type="hybrid")
 async def search_hybrid(request: SearchRequest):
     """Hybrid search endpoint."""
     try:

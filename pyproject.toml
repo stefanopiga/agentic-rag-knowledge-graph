@@ -61,6 +61,14 @@ prod = [
     "docker>=7.0.0",
 ]
 
+# Monitoring dependencies
+monitoring = [
+    "prometheus-client>=0.21.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
+    "structlog>=24.1.0",
+    "sentry-sdk[fastapi]>=2.18.0",
+]
+
 # Documentation dependencies
 docs = [
     "mkdocs>=1.6.0",
@@ -96,6 +104,10 @@ dev-dependencies = [
     "pytest-cov>=6.2.1",
     "bandit>=1.7.5",
     "safety>=3.0.0",
+    "prometheus-client>=0.21.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
+    "structlog>=24.1.0",
+    "sentry-sdk[fastapi]>=2.18.0",
 ]
 
 # UV workspace configuration (solo Python packages)
