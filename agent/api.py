@@ -12,11 +12,12 @@ from datetime import datetime
 import uuid
 
 from fastapi import FastAPI, HTTPException, Request, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
 from dotenv import load_dotenv
+from prometheus_client import generate_latest
 
 from .agent import rag_agent, AgentDependencies
 from .db_utils import (
@@ -26,8 +27,10 @@ from .db_utils import (
     get_session,
     add_message,
     get_session_messages,
-    test_connection
+    test_connection,
+    get_database_status
 )
+from .cache_manager import initialize_cache, close_cache, cache_manager
 from .graph_utils import initialize_graph, close_graph, test_graph_connection
 from .models import (
     ChatRequest,
@@ -38,6 +41,15 @@ from .models import (
     ErrorResponse,
     HealthStatus,
     ToolCall
+)
+from .monitoring import (
+    setup_monitoring,
+    MonitoringMiddleware,
+    track_rag_query,
+    track_vector_search,
+    track_graph_query,
+    get_detailed_health_status,
+    update_connection_metrics
 )
 from .tools import (
     vector_search_tool,
@@ -60,6 +72,8 @@ APP_ENV = os.getenv("APP_ENV", "development")
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", 8000))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+ENABLE_METRICS = os.getenv("ENABLE_METRICS", "true").lower() == "true"
+METRICS_PORT = int(os.getenv("METRICS_PORT", 9090))
 
 # Configure logging
 logging.basicConfig(
@@ -87,16 +101,28 @@ async def lifespan(app: FastAPI):
         await initialize_graph()
         logger.info("Graph database initialized")
         
+        # Initialize cache
+        await initialize_cache()
+        logger.info("Cache manager initialized")
+        
         # Test connections
         db_ok = await test_connection()
         graph_ok = await test_graph_connection()
+        cache_ok = (await cache_manager.health_check()).get("status") == "healthy"
         
         if not db_ok:
             logger.error("Database connection failed")
         if not graph_ok:
             logger.error("Graph database connection failed")
+        if not cache_ok:
+            logger.error("Cache connection failed")
         
         logger.info("Agentic RAG API startup complete")
+        
+        # Expose metrics endpoint if enabled
+        if ENABLE_METRICS and instrumentator:
+            instrumentator.expose(app, endpoint="/metrics")
+            logger.info(f"Metrics endpoint exposed at /metrics")
         
     except Exception as e:
         logger.error(f"Startup failed: {e}")
@@ -110,6 +136,7 @@ async def lifespan(app: FastAPI):
     try:
         await close_database()
         await close_graph()
+        await close_cache()
         logger.info("Connections closed")
     except Exception as e:
         logger.error(f"Shutdown error: {e}")
@@ -133,6 +160,12 @@ app.add_middleware(
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Add monitoring middleware
+app.add_middleware(MonitoringMiddleware)
+
+# Setup monitoring and metrics
+instrumentator = setup_monitoring(app, enable_metrics=ENABLE_METRICS)
 
 
 # Helper functions for agent execution
@@ -362,11 +395,16 @@ async def health_check():
         # Test database connections
         db_status = await test_connection()
         graph_status = await test_graph_connection()
+        cache_health = await cache_manager.health_check()
+        cache_status = cache_health.get("status") == "healthy"
+        
+        # Update connection metrics
+        update_connection_metrics()
         
         # Determine overall status
-        if db_status and graph_status:
+        if db_status and graph_status and cache_status:
             status = "healthy"
-        elif db_status or graph_status:
+        elif (db_status and graph_status) or (db_status and cache_status) or (graph_status and cache_status):
             status = "degraded"
         else:
             status = "unhealthy"
@@ -383,6 +421,45 @@ async def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=500, detail="Health check failed")
+
+
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Detailed health check with metrics information."""
+    try:
+        return await get_detailed_health_status()
+    except Exception as e:
+        logger.error(f"Detailed health check failed: {e}")
+        raise HTTPException(status_code=500, detail="Detailed health check failed")
+
+
+@app.get("/metrics")
+async def get_metrics():
+    """Prometheus metrics endpoint."""
+    if not ENABLE_METRICS:
+        raise HTTPException(status_code=404, detail="Metrics disabled")
+    
+    return PlainTextResponse(
+        generate_latest(),
+        media_type="text/plain; version=0.0.4; charset=utf-8"
+    )
+
+
+@app.get("/status/database")
+async def database_status():
+    """Get detailed database status and metrics."""
+    try:
+        status = await get_database_status()
+        cache_health = await cache_manager.health_check()
+        
+        return {
+            "database": status,
+            "cache": cache_health,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Database status check failed: {e}")
+        raise HTTPException(status_code=500, detail="Database status check failed")
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -523,6 +600,7 @@ async def chat_stream(request: ChatRequest):
 
 
 @app.post("/search/vector")
+@track_vector_search()
 async def search_vector(request: SearchRequest):
     """Vector search endpoint."""
     try:
@@ -550,6 +628,7 @@ async def search_vector(request: SearchRequest):
 
 
 @app.post("/search/graph")
+@track_graph_query()
 async def search_graph(request: SearchRequest):
     """Knowledge graph search endpoint."""
     try:
@@ -576,6 +655,7 @@ async def search_graph(request: SearchRequest):
 
 
 @app.post("/search/hybrid")
+@track_rag_query(query_type="hybrid")
 async def search_hybrid(request: SearchRequest):
     """Hybrid search endpoint."""
     try:

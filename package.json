@@ -1,0 +1,109 @@
+{
+  "name": "fisiorag-monorepo",
+  "version": "1.0.0",
+  "description": "Sistema RAG Agentico Multi-Tenant per la Fisioterapia - Monorepo Configuration",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0",
+    "bun": ">=1.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "dev:backend": "uv run python run_backend.py",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:bun": "bun run dev:frontend",
+    
+    "build": "pnpm run build:backend && pnpm run build:frontend",
+    "build:backend": "uv run python -m compileall .",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:bun": "bun run build:frontend",
+    
+    "test": "pnpm run test:backend && pnpm run test:frontend",
+    "test:backend": "uv run pytest",
+    "test:frontend": "pnpm --filter frontend test",
+    "test:watch": "pnpm --filter frontend test:watch",
+    
+    "lint": "pnpm run lint:backend && pnpm run lint:frontend",
+    "lint:backend": "uv run ruff check . && uv run mypy .",
+    "lint:frontend": "pnpm --filter frontend lint",
+    "lint:fix": "pnpm run lint:fix:backend && pnpm run lint:fix:frontend",
+    "lint:fix:backend": "uv run ruff check --fix . && uv run black .",
+    "lint:fix:frontend": "pnpm --filter frontend lint:fix",
+    
+    "format": "pnpm run format:backend && pnpm run format:frontend",
+    "format:backend": "uv run black . && uv run isort .",
+    "format:frontend": "pnpm --filter frontend format",
+    
+    "type-check": "pnpm run type-check:backend && pnpm run type-check:frontend",
+    "type-check:backend": "uv run mypy .",
+    "type-check:frontend": "pnpm --filter frontend type-check",
+    
+    "clean": "pnpm run clean:backend && pnpm run clean:frontend",
+    "clean:backend": "uv cache clean && find . -type d -name __pycache__ -delete",
+    "clean:frontend": "pnpm --filter frontend clean && pnpm store prune",
+    "clean:all": "rm -rf .venv node_modules frontend/node_modules frontend/dist",
+    
+    "setup": "uv sync && pnpm install",
+    "setup:bun": "uv sync && bun install",
+    "reset": "pnpm clean:all && pnpm setup",
+    
+    "pre-commit": "pnpm lint:fix && pnpm type-check && pnpm test",
+    "ci": "pnpm install --frozen-lockfile && pnpm lint && pnpm type-check && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "@changesets/cli": "^2.27.9",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "*.{py}": [
+      "uv run black",
+      "uv run isort",
+      "uv run ruff check --fix"
+    ],
+    "*.{ts,tsx,js,jsx}": [
+      "pnpm --filter frontend lint:fix",
+      "pnpm --filter frontend format"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "prettier --write"
+    ]
+  },
+  "workspaces": [
+    "frontend",
+    "packages/*"
+  ],
+  "keywords": [
+    "monorepo",
+    "rag",
+    "ai",
+    "medical",
+    "physiotherapy",
+    "python",
+    "react",
+    "typescript",
+    "uv",
+    "pnpm",
+    "bun"
+  ],
+  "author": "FisioRAG Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fisiorag/agentic-rag-knowledge-graph"
+  },
+  "bugs": {
+    "url": "https://github.com/fisiorag/agentic-rag-knowledge-graph/issues"
+  },
+  "homepage": "https://fisiorag.com"
+}

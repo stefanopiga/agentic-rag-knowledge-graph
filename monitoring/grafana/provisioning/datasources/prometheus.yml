@@ -1,0 +1,45 @@
+# Grafana datasource configuration for FisioRAG monitoring
+apiVersion: 1
+
+datasources:
+  # Prometheus datasource
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "5s"
+      queryTimeout: "60s"
+      httpMethod: "POST"
+      manageAlerts: true
+      prometheusType: "Prometheus"
+      prometheusVersion: "2.45.0"
+      cacheLevel: "High"
+      incrementalQuerying: true
+      disableRecordingRules: false
+    secureJsonFields: {}
+    version: 1
+
+  # Optional: Loki for logs (if using)
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      timeInterval: "5s"
+      queryTimeout: "60s"
+      maxLines: 1000
+    version: 1
+
+  # Optional: Alertmanager datasource
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: true
+    jsonData:
+      implementation: "prometheus"
+    version: 1
