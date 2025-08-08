@@ -1,0 +1,58 @@
+# Ambiente virtuale
+venv/
+.venv/
+
+# Cache di Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Cache di pytest
+.pytest_cache/
+.coverage
+
+# File di configurazione locali
+.env
+env.txt
+
+# Directory di output dei test
+htmlcov/
+
+# File e directory di Git
+.git/
+.gitignore
+
+# File di configurazione di editor/IDE
+.idea/
+.vscode/
+.cursor/
+
+# Log
+logs/
+*.log
+
+# Node.js e frontend (se build separata)
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+*.tgz
+.pnpm-lock.yaml
+
+# Cache UV
+.uv-cache/
+
+# Database e documenti di test
+documents_test/
+
+# File di build temporanei
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+
+# Cache e build artifacts
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
