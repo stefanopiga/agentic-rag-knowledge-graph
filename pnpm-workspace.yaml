@@ -1,0 +1,64 @@
+# PNPM Workspace Configuration for FisioRAG
+# Ultra-fast package management for monorepo frontend
+
+packages:
+  # Main frontend application
+  - "frontend"
+
+  # Shared packages and components
+  - "packages/*"
+
+  # Tools and utilities
+  - "tools/*"
+
+# Catalog for shared dependencies (PNPM v9+ feature)
+catalog:
+  # React ecosystem
+  react: ^18.3.1
+  react-dom: ^18.3.1
+  react-router-dom: ^7.0.1
+
+  # Build tools
+  vite: ^7.1.0
+  "@vitejs/plugin-react": ^5.0.0
+
+  # TypeScript
+  typescript: ^5.8.3
+  "@types/react": ^18.3.12
+  "@types/react-dom": ^18.3.1
+  "@types/node": ^22.10.2
+
+  # Styling
+  tailwindcss: ^3.4.0
+  autoprefixer: ^10.4.20
+  postcss: ^8.5.1
+
+  # State management
+  zustand: ^5.0.2
+
+  # HTTP client
+  axios: ^1.7.9
+
+  # Utilities
+  clsx: ^2.1.1
+  lucide-react: ^0.468.0
+  date-fns: ^4.1.0
+
+  # Development tools
+  eslint: ^9.17.0
+  prettier: ^3.4.2
+  "@typescript-eslint/eslint-plugin": ^8.19.0
+  "@typescript-eslint/parser": ^8.19.0
+
+  # Testing
+  vitest: ^2.1.8
+  "@testing-library/react": ^16.1.0
+  "@testing-library/jest-dom": ^6.6.3
+  jsdom: ^25.0.1
+
+# Shared configuration
+sharedWorkspaceFile:
+  - .gitignore
+  - .prettierrc
+  - .eslintrc.json
+  - tsconfig.json

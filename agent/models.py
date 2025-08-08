@@ -225,6 +225,7 @@ class IngestionResult(BaseModel):
     """Result of document ingestion."""
     document_id: str
     title: str
+    success: bool
     chunks_created: int
     entities_extracted: int
     relationships_created: int

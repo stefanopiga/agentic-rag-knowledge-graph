@@ -1,0 +1,218 @@
+[project]
+name = "fisiorag"
+version = "0.1.0"
+description = "Sistema RAG Agentico Multi-Tenant per la Fisioterapia"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "FisioRAG Team", email = "team@fisiorag.com" }
+]
+keywords = ["rag", "ai", "medical", "physiotherapy", "knowledge-graph"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Healthcare Industry",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# Core dependencies for the AI RAG system
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "pydantic-ai>=0.3.2",
+    "openai>=1.90.0",
+    "graphiti>=0.1.13",
+    "graphiti-core>=0.12.4",
+    "neo4j>=5.28.1",
+    "asyncpg>=0.30.0",
+    "redis>=5.0.1",
+    "python-multipart>=0.0.20",
+    "python-dotenv>=1.1.0",
+    "aiofiles>=24.1.0",
+    "httpx>=0.28.1",
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.10.0",
+    "python-docx>=1.2.0",
+    "PyPDF2>=3.0.1",
+    "numpy>=2.3.1",
+    "psycopg2-binary>=2.9.0",
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=8.4.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "mypy>=1.8.0",
+    "ruff>=0.7.0",
+    "pre-commit>=4.0.0",
+    "bandit>=1.7.5",
+    "safety>=3.0.0",
+]
+
+# Production deployment dependencies  
+prod = [
+    "gunicorn>=23.0.0",
+    "docker>=7.0.0",
+]
+
+# Monitoring dependencies
+monitoring = [
+    "prometheus-client>=0.21.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
+    "structlog>=24.1.0",
+    "sentry-sdk[fastapi]>=2.18.0",
+]
+
+# Documentation dependencies
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.26.0",
+]
+
+# Load testing dependencies
+load_testing = [
+    "locust>=2.31.0",         # Load testing framework
+    "psutil>=6.0.0",          # System monitoring
+    "memory-profiler>=0.61.0", # Memory analysis
+    "plotly>=5.18.0",         # Performance charts
+    "faker>=30.0.0",          # Test data generation
+    "pytest-benchmark>=4.0.0", # Performance regression testing
+]
+
+[project.scripts]
+fisiorag = "agent.cli:main"
+fisiorag-ingest = "ingestion.cli:main"
+fisiorag-serve = "agent.api:serve"
+
+[project.urls]
+Homepage = "https://github.com/fisiorag/agentic-rag-knowledge-graph"
+Documentation = "https://docs.fisiorag.com"
+Repository = "https://github.com/fisiorag/agentic-rag-knowledge-graph"
+Issues = "https://github.com/fisiorag/agentic-rag-knowledge-graph/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent", "ingestion", "fisio_rag_saas"]
+
+[tool.uv]
+# UV-specific configuration
+dev-dependencies = [
+    "pytest>=8.4.0",
+    "pytest-asyncio>=0.24.0",
+    "black>=24.0.0",
+    "ruff>=0.7.0",
+    "pytest-cov>=6.2.1",
+    "bandit>=1.7.5",
+    "safety>=3.0.0",
+    "prometheus-client>=0.21.0",
+    "prometheus-fastapi-instrumentator>=7.0.0",
+    "structlog>=24.1.0",
+    "sentry-sdk[fastapi]>=2.18.0",
+]
+
+# UV workspace configuration (solo Python packages)
+[tool.uv.workspace]
+members = ["."]
+
+[tool.uv.sources]
+# Local development overrides if needed
+# graphiti = { workspace = true }
+
+[tool.black]
+line-length = 88
+target-version = ["py311", "py312", "py313"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # Directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | frontend
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+skip = ["frontend", "node_modules"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = ["frontend", "node_modules", ".venv"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = ["E501", "B008", "W191", "B904"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = ["frontend", "node_modules"]
+
+[[tool.mypy.overrides]]
+module = [
+    "neo4j.*",
+    "graphiti.*",
+    "docx.*",
+    "PyPDF2.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "--tb=short --strict-markers --disable-warnings"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["agent", "ingestion", "fisio_rag_saas"]
+omit = ["*/tests/*", "*/test_*", "frontend/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+]

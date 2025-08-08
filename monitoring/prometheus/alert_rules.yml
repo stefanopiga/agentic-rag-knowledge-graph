@@ -1,0 +1,181 @@
+# Alert rules for FisioRAG monitoring
+groups:
+  # Application Health Alerts
+  - name: fisiorag.health
+    rules:
+      - alert: FisioRAGApplicationDown
+        expr: up{job="fisiorag-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "FisioRAG application is down"
+          description: "FisioRAG API has been down for more than 1 minute."
+
+      - alert: FisioRAGHighErrorRate
+        expr: rate(fisiorag_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: FisioRAGHighResponseTime
+        expr: histogram_quantile(0.95, rate(fisiorag_request_duration_seconds_bucket[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s over the last 10 minutes."
+
+  # Database Alerts
+  - name: fisiorag.database
+    rules:
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL has been down for more than 2 minutes."
+
+      - alert: Neo4jDown
+        expr: up{job="neo4j"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Neo4j database is down"
+          description: "Neo4j has been down for more than 2 minutes."
+
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis has been down for more than 2 minutes."
+
+      - alert: DatabaseConnectionPoolHigh
+        expr: fisiorag_db_connections_active > 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connection pool usage is {{ $value }} connections."
+
+  # Performance Alerts
+  - name: fisiorag.performance
+    rules:
+      - alert: HighRAGQueryLatency
+        expr: histogram_quantile(0.95, rate(fisiorag_rag_query_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RAG query latency"
+          description: "95th percentile RAG query latency is {{ $value }}s."
+
+      - alert: HighVectorSearchLatency
+        expr: histogram_quantile(0.95, rate(fisiorag_vector_search_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High vector search latency"
+          description: "95th percentile vector search latency is {{ $value }}s."
+
+      - alert: HighLLMRequestLatency
+        expr: histogram_quantile(0.95, rate(fisiorag_llm_request_duration_seconds_bucket[5m])) > 60
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High LLM request latency"
+          description: "95th percentile LLM request latency is {{ $value }}s."
+
+  # Resource Usage Alerts
+  - name: fisiorag.resources
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}."
+
+  # Business Logic Alerts  
+  - name: fisiorag.business
+    rules:
+      - alert: LowCacheHitRate
+        expr: rate(fisiorag_cache_operations_total{result="hit"}[10m]) / rate(fisiorag_cache_operations_total{operation="get"}[10m]) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} over the last 15 minutes."
+
+      - alert: HighFailedDocumentProcessing
+        expr: rate(fisiorag_documents_processed_total{status="failed"}[10m]) / rate(fisiorag_documents_processed_total[10m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High document processing failure rate"
+          description: "Document processing failure rate is {{ $value | humanizePercentage }}."
+
+      - alert: TooManyActiveSessions
+        expr: fisiorag_sessions_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of active sessions"
+          description: "There are {{ $value }} active sessions."
+
+  # Security Alerts
+  - name: fisiorag.security
+    rules:
+      - alert: HighFailedRequests
+        expr: rate(fisiorag_requests_total{status=~"4.."}[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of failed requests"
+          description: "Rate of 4xx requests is {{ $value }} per second."
+
+      - alert: TooManyRequestsFromSingleIP
+        expr: rate(fisiorag_requests_total[1m]) by (instance, handler) > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Possible DDoS attack"
+          description: "High request rate from single source: {{ $value }} requests/sec."

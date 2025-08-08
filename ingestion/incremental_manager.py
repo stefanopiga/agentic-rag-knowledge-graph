@@ -12,6 +12,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from enum import Enum
+from uuid import UUID
 
 import asyncpg
 from dotenv import load_dotenv
@@ -87,7 +88,7 @@ class IncrementalIngestionManager:
             # Database connection is managed by db_pool
             self._initialized = True
     
-    async def scan_documents(self, base_path: str) -> List[DocumentScanResult]:
+    async def scan_documents(self, base_path: str, tenant_id: UUID) -> List[DocumentScanResult]:
         """
         Scansiona documenti e determina azioni necessarie.
         
@@ -116,10 +117,12 @@ class IncrementalIngestionManager:
                 last_modified = datetime.fromtimestamp(file_stat.st_mtime, tz=timezone.utc)
                 
                 # Estrai metadati da struttura directory
-                category, order = self._extract_metadata_from_path(file_path)
+                metadata = self._extract_metadata_from_path(file_path)
+                category = metadata.get('category', 'uncategorized')
+                order = metadata.get('document_order', 999)
                 
                 # Controlla stato nel database
-                status_record = await self._get_ingestion_status(file_path)
+                status_record = await self._get_ingestion_status(file_path, tenant_id)
                 
                 # Determina azione necessaria
                 action, reason = self._determine_action(status_record, file_hash, file_size, last_modified)
@@ -183,12 +186,12 @@ class IncrementalIngestionManager:
             logger.error(f"Error calculating hash for {file_path}: {e}")
             return ""
     
-    def _extract_metadata_from_path(self, file_path: str) -> Tuple[str, int]:
+    def _extract_metadata_from_path(self, file_path: str) -> Dict[str, Any]:
         """
         Estrae categoria e ordine da percorso file.
         
         Esempio: documents/fisioterapia/master/caviglia_e_piede/01_anatomia.docx
-        -> categoria: caviglia_e_piede, ordine: 1
+        -> {'category': 'caviglia_e_piede', 'document_order': 1}
         """
         try:
             parts = Path(file_path).parts
@@ -204,12 +207,14 @@ class IncrementalIngestionManager:
                 # Categoria è la cartella dopo 'master'
                 category = parts[master_index + 1]
                 
-                # Estrai numero ordine da nome file
+                # Estrai numero ordine da nome file usando logica flessibile
                 filename = parts[-1]
-                order_match = re.match(r'^(\d+)_', filename)
-                order = int(order_match.group(1)) if order_match else 999
+                order = self._extract_order_from_filename(filename)
                 
-                return category, order
+                return {
+                    'category': category,
+                    'document_order': order
+                }
             
             # Fallback: usa nome cartella genitore e ordine default
             if len(parts) >= 2:
@@ -217,19 +222,84 @@ class IncrementalIngestionManager:
             else:
                 category = "uncategorized"
                 
-            return category, 999
+            return {
+                'category': category,
+                'document_order': 999
+            }
             
         except Exception as e:
             logger.warning(f"Error extracting metadata from path {file_path}: {e}")
-            return "uncategorized", 999
+            return {
+                'category': "uncategorized",
+                'document_order': 999
+            }
     
-    async def _get_ingestion_status(self, file_path: str) -> Optional[IngestionStatusRecord]:
-        """Get ingestion status record from database."""
+    def _auto_assign_category_priority(self, category: str) -> int:
+        """
+        Assegna automaticamente priorità a categorie non predefinite.
+        Utile per nuove categorie aggiunte dinamicamente.
+        """
+        # Pattern matching per categorie anatomiche
+        category_lower = category.lower()
+        
+        if any(term in category_lower for term in ['cervicale', 'collo', 'neck']):
+            return 5
+        elif any(term in category_lower for term in ['atm', 'temporo', 'mandibolare', 'jaw']):
+            return 8
+        elif any(term in category_lower for term in ['superiore', 'braccio', 'spalla', 'mano']):
+            return 15
+        elif any(term in category_lower for term in ['toracico', 'torace', 'costole']):
+            return 20
+        elif any(term in category_lower for term in ['lombare', 'schiena', 'lower_back']):
+            return 25
+        elif any(term in category_lower for term in ['pelvico', 'bacino', 'pelvis']):
+            return 30
+        elif any(term in category_lower for term in ['ginocchio', 'anca', 'knee', 'hip']):
+            return 35
+        elif any(term in category_lower for term in ['piede', 'caviglia', 'foot', 'ankle']):
+            return 40
+        else:
+            # Categoria sconosciuta - priorità bassa
+            logger.info(f"Auto-assigning low priority to unknown category: {category}")
+            return 90
+    
+    def _extract_order_from_filename(self, filename: str) -> int:
+        """
+        Estrae numero ordine da filename con pattern flessibili.
+        
+        Supporta:
+        - 01_anatomia.docx (standard)
+        - 1. Anatomia.docx 
+        - Anatomia - 01.docx
+        - 001_anatomia.docx
+        """
+        import re
+        
+        # Pattern 1: Numero all'inizio seguito da underscore o punto
+        match = re.search(r'^(\d{1,3})[._\-\s]', filename)
+        if match:
+            return int(match.group(1))
+        
+        # Pattern 2: Numero alla fine preceduto da spazio o trattino
+        match = re.search(r'[\s\-](\d{1,3})\.docx?$', filename, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+        
+        # Pattern 3: Numero nel mezzo del filename
+        match = re.search(r'(\d{1,3})', filename)
+        if match:
+            return int(match.group(1))
+        
+        # Fallback: ordine alto per file senza numerazione
+        return 999
+    
+    async def _get_ingestion_status(self, file_path: str, tenant_id: UUID) -> Optional[IngestionStatusRecord]:
+        """Get ingestion status record from database for a specific tenant."""
         try:
             async with db_pool.acquire() as conn:
                 row = await conn.fetchrow(
-                    "SELECT * FROM document_ingestion_status WHERE file_path = $1",
-                    file_path
+                    "SELECT * FROM document_ingestion_status WHERE file_path = $1 AND tenant_id = $2",
+                    file_path, tenant_id
                 )
                 
                 if row:
@@ -290,44 +360,45 @@ class IncrementalIngestionManager:
         return processing_time.total_seconds() > 7200
     
     async def create_or_update_status(
-        self, 
-        file_path: str, 
-        file_hash: str, 
+        self,
+        file_path: str,
+        file_hash: str,
         file_size: int,
         last_modified: datetime,
         category: str,
         document_order: int,
+        tenant_id: UUID,
         status: str = 'pending'
     ) -> int:
         """Create or update ingestion status record."""
         try:
             priority_weight = self.calculate_citation_priority(category, document_order)
-            
+
             async with db_pool.acquire() as conn:
                 # Try update first
                 result = await conn.fetchrow("""
-                    UPDATE document_ingestion_status 
+                    UPDATE document_ingestion_status
                     SET file_hash = $2, file_size = $3, last_modified = $4,
                         category = $5, document_order = $6, priority_weight = $7,
                         status = $8, updated_at = NOW()
-                    WHERE file_path = $1
-                    RETURNING id
-                """, file_path, file_hash, file_size, last_modified, 
-                    category, document_order, priority_weight, status)
-                
-                if result:
-                    return result['id']
-                
-                # Insert new record
-                result = await conn.fetchrow("""
-                    INSERT INTO document_ingestion_status 
-                    (file_path, file_hash, file_size, last_modified, category, 
-                     document_order, priority_weight, status)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    WHERE file_path = $1 AND tenant_id = $9
                     RETURNING id
                 """, file_path, file_hash, file_size, last_modified,
-                    category, document_order, priority_weight, status)
-                
+                    category, document_order, priority_weight, status, tenant_id)
+
+                if result:
+                    return result['id']
+
+                # Insert new record
+                result = await conn.fetchrow("""
+                    INSERT INTO document_ingestion_status
+                    (file_path, file_hash, file_size, last_modified, category,
+                     document_order, priority_weight, status, tenant_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    RETURNING id
+                """, file_path, file_hash, file_size, last_modified,
+                    category, document_order, priority_weight, status, tenant_id)
+
                 return result['id']
                 
         except Exception as e:
@@ -421,17 +492,28 @@ class IncrementalIngestionManager:
         """Calcola priorità per ordinamento citazioni."""
         
         # Priorità categorie (lower = higher priority)
+        # Sistema dinamico: riconosce automaticamente nuove categorie
         category_priorities = {
-            'caviglia_e_piede': 10,
-            'ginocchio': 20, 
-            'lombare': 30,
-            'toracico': 40,
-            'lombo_pelvico': 50,
+            # Aree anatomiche principali (ordine cranio-caudale)
+            'cervicale': 5,
+            'ATM': 8,  # Articolazione temporo-mandibolare
+            'arto_superiore': 15,
+            'toracico': 20,
+            'lombare': 25,
+            'lombo_pelvico': 30,
+            'ginocchio_e_anca': 35,
+            'piede_e_caviglia': 40,
+            
+            # Categorie legacy (backward compatibility)
+            'caviglia_e_piede': 40,
+            'ginocchio': 35,
+            
+            # Fallback
             'uncategorized': 100
         }
         
-        base_priority = category_priorities.get(category, 100)
-        return base_priority + document_order  # 11, 12, 13... per caviglia_e_piede
+        base_priority = category_priorities.get(category, self._auto_assign_category_priority(category))
+        return base_priority + document_order  # 11, 12, 13... per categoria
     
     async def get_ingestion_report(self) -> Dict[str, Any]:
         """Generate comprehensive ingestion status report."""

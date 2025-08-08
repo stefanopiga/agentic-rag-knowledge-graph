@@ -1,0 +1,181 @@
+# Alertmanager configuration for FisioRAG
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@fisiorag.com'
+  smtp_auth_username: 'alerts@fisiorag.com'
+  smtp_auth_password: 'your-app-password'
+  smtp_require_tls: true
+
+# Templates for alert notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Routing tree for alerts
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'web.hook'
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # Database alerts
+    - match_re:
+        alertname: (PostgreSQLDown|Neo4jDown|RedisDown)
+      receiver: 'database-alerts'
+      group_wait: 30s
+      repeat_interval: 10m
+
+    # Performance alerts
+    - match_re:
+        alertname: (HighRAGQueryLatency|HighVectorSearchLatency|HighLLMRequestLatency)
+      receiver: 'performance-alerts'
+      group_wait: 1m
+      repeat_interval: 30m
+
+    # Security alerts
+    - match_re:
+        alertname: (HighFailedRequests|TooManyRequestsFromSingleIP)
+      receiver: 'security-alerts'
+      group_wait: 0s
+      repeat_interval: 15m
+
+# Inhibition rules to prevent alert spam
+inhibit_rules:
+  # If application is down, don't alert on high error rates
+  - source_match:
+      alertname: FisioRAGApplicationDown
+    target_match_re:
+      alertname: (FisioRAGHighErrorRate|FisioRAGHighResponseTime)
+    equal: ['instance']
+
+  # If database is down, don't alert on connection issues
+  - source_match_re:
+      alertname: (PostgreSQLDown|Neo4jDown|RedisDown)
+    target_match_re:
+      alertname: (DatabaseConnectionPoolHigh|HighRAGQueryLatency)
+    equal: ['instance']
+
+# Receivers for different alert types
+receivers:
+  # Default webhook receiver
+  - name: 'web.hook'
+    webhook_configs:
+      - url: 'http://fisiorag-webhook:5000/webhook'
+        send_resolved: true
+
+  # Critical alerts - multiple channels
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'admin@fisiorag.com'
+        subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }} - FisioRAG'
+        body: |
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Severity:** {{ .Labels.severity }}
+          **Instance:** {{ .Labels.instance }}
+          **Time:** {{ .StartsAt }}
+          {{ end }}
+        headers:
+          Priority: 'high'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#fisiorag-critical'
+        title: '🚨 Critical Alert - FisioRAG'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          {{ end }}
+        send_resolved: true
+
+    pagerduty_configs:
+      - routing_key: 'your-pagerduty-routing-key'
+        description: '{{ .GroupLabels.alertname }} - FisioRAG Critical Alert'
+
+  # Database alerts
+  - name: 'database-alerts'
+    email_configs:
+      - to: 'dbadmin@fisiorag.com'
+        subject: '🗄️ Database Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          Database Issue Detected:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Database: {{ .Labels.database_type }}
+          Time: {{ .StartsAt }}
+          {{ end }}
+
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#fisiorag-database'
+        title: '🗄️ Database Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+
+  # Performance alerts
+  - name: 'performance-alerts'
+    email_configs:
+      - to: 'performance@fisiorag.com'
+        subject: '⚡ Performance Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          Performance Issue Detected:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Component: {{ .Labels.job }}
+          Time: {{ .StartsAt }}
+          {{ end }}
+
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#fisiorag-performance'
+        title: '⚡ Performance Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+
+  # Security alerts
+  - name: 'security-alerts'
+    email_configs:
+      - to: 'security@fisiorag.com'
+        subject: '🔒 Security Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          Security Issue Detected:
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Source: {{ .Labels.instance }}
+          Time: {{ .StartsAt }}
+          {{ end }}
+        headers:
+          Priority: 'high'
+
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'  
+        channel: '#fisiorag-security'
+        title: '🔒 Security Alert'
+        text: |
+          {{ range .Alerts }}
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: true
