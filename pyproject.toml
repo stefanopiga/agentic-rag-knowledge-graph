@@ -76,6 +76,16 @@ docs = [
     "mkdocstrings[python]>=0.26.0",
 ]
 
+# Load testing dependencies
+load_testing = [
+    "locust>=2.31.0",         # Load testing framework
+    "psutil>=6.0.0",          # System monitoring
+    "memory-profiler>=0.61.0", # Memory analysis
+    "plotly>=5.18.0",         # Performance charts
+    "faker>=30.0.0",          # Test data generation
+    "pytest-benchmark>=4.0.0", # Performance regression testing
+]
+
 [project.scripts]
 fisiorag = "agent.cli:main"
 fisiorag-ingest = "ingestion.cli:main"

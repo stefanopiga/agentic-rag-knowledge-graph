@@ -3,15 +3,15 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    cluster: 'fisiorag-production'
-    replica: 'prometheus-01'
+    cluster: "fisiorag-production"
+    replica: "prometheus-01"
 
 # Alertmanager configuration
 alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          - alertmanager:9093
+            - alertmanager:9093
 
 # Rules files
 rule_files:
@@ -21,22 +21,22 @@ rule_files:
 # Scrape configurations
 scrape_configs:
   # Prometheus self-monitoring
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
     scrape_interval: 30s
-    metrics_path: '/metrics'
+    metrics_path: "/metrics"
 
   # FisioRAG Application
-  - job_name: 'fisiorag-api'
+  - job_name: "fisiorag-api"
     static_configs:
-      - targets: ['app:8000']
+      - targets: ["app:8000"]
     scrape_interval: 15s
-    metrics_path: '/metrics'
+    metrics_path: "/metrics"
     scrape_timeout: 10s
     honor_labels: true
     params:
-      format: ['prometheus']
+      format: ["prometheus"]
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -46,67 +46,66 @@ scrape_configs:
         replacement: app:8000
 
   # PostgreSQL Database
-  - job_name: 'postgres-exporter'
+  - job_name: "postgres-exporter"
     static_configs:
-      - targets: ['postgres-exporter:9187']
+      - targets: ["postgres-exporter:9187"]
     scrape_interval: 30s
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-        regex: '(.+)'
-        replacement: 'postgresql'
+        regex: "(.+)"
+        replacement: "postgresql"
 
   # Neo4j Database
-  - job_name: 'neo4j'
+  - job_name: "neo4j"
     static_configs:
-      - targets: ['neo4j:7474']
+      - targets: ["neo4j:7474"]
     scrape_interval: 30s
-    metrics_path: '/db/neo4j/tx/commit'
+    metrics_path: "/db/neo4j/tx/commit"
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-        regex: '(.+)'
-        replacement: 'neo4j'
+        regex: "(.+)"
+        replacement: "neo4j"
 
   # Redis Cache
-  - job_name: 'redis-exporter'
+  - job_name: "redis-exporter"
     static_configs:
-      - targets: ['redis-exporter:9121']
+      - targets: ["redis-exporter:9121"]
     scrape_interval: 30s
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-        regex: '(.+)'
-        replacement: 'redis'
+        regex: "(.+)"
+        replacement: "redis"
 
   # Node Exporter (System metrics)
-  - job_name: 'node-exporter'
+  - job_name: "node-exporter"
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets: ["node-exporter:9100"]
     scrape_interval: 30s
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-        regex: '(.+)'
-        replacement: 'fisiorag-host'
+        regex: "(.+)"
+        replacement: "fisiorag-host"
 
   # cAdvisor (Container metrics)
-  - job_name: 'cadvisor'
+  - job_name: "cadvisor"
     static_configs:
-      - targets: ['cadvisor:8080']
+      - targets: ["cadvisor:8080"]
     scrape_interval: 30s
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-        regex: '(.+)'
-        replacement: 'containers'
+        regex: "(.+)"
+        replacement: "containers"
 
   # Docker Daemon
-  - job_name: 'docker'
+  - job_name: "docker"
     static_configs:
-      - targets: ['host.docker.internal:9323']
+      - targets: ["host.docker.internal:9323"]
     scrape_interval: 30s
-
 # Remote write configuration (for long-term storage)
 # Uncomment if using remote storage like Thanos, Cortex, etc.
 # remote_write:
