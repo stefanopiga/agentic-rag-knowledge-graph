@@ -1,0 +1,28 @@
+{
+  "security_level": "basic",
+  "policy_summary": {
+    "password_requirements": {
+      "min_length": 12,
+      "complexity_required": true,
+      "max_age_days": 90
+    },
+    "session_security": {
+      "timeout_minutes": 30,
+      "secure_cookies": true
+    },
+    "api_protection": {
+      "rate_limit_rpm": 60,
+      "cors_configured": false
+    },
+    "compliance": {
+      "gdpr_enabled": true,
+      "hipaa_enabled": true,
+      "data_encryption": true
+    }
+  },
+  "security_events_count": 0,
+  "last_vulnerability_scan": null,
+  "recommendations": [
+    "Consider upgrading to Enhanced or Enterprise security level"
+  ]
+}
