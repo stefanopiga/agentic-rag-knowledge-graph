@@ -51,6 +51,8 @@ dev = [
     "mypy>=1.8.0",
     "ruff>=0.7.0",
     "pre-commit>=4.0.0",
+    "bandit>=1.7.5",
+    "safety>=3.0.0",
 ]
 
 # Production deployment dependencies  
@@ -92,6 +94,8 @@ dev-dependencies = [
     "black>=24.0.0",
     "ruff>=0.7.0",
     "pytest-cov>=6.2.1",
+    "bandit>=1.7.5",
+    "safety>=3.0.0",
 ]
 
 # UV workspace configuration (solo Python packages)
