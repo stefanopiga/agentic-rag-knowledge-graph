@@ -2,6 +2,11 @@
 
 ## Parent Task A: Consolidate branches into main
 
+Links PR:
+- #7 docker-modernization → main
+- #8 scalability-testing → main
+- #9 security-hardening → main
+
 - [x] Create PR docker-modernization → main (PR #7)
 - [x] Create PR scalability-testing → main (PR #8)
 - [x] Create PR security-hardening → main (PR #9)

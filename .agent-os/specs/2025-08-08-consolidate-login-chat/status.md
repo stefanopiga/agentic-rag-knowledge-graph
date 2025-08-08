@@ -10,6 +10,27 @@ Date: 2025-08-08
   - #8 scalability-testing → main (open)
   - #9 security-hardening → main (open)
 
+### Link PR
+- #7: https://github.com/stefanopiga/agentic-rag-knowledge-graph/pull/7
+- #8: https://github.com/stefanopiga/agentic-rag-knowledge-graph/pull/8
+- #9: https://github.com/stefanopiga/agentic-rag-knowledge-graph/pull/9
+
+### Branch tracking
+- `main` remoto creato
+- Branch spec: `spec/2025-08-08-consolidate-login-chat-tasks-update`
+- Branch docs: `docs/agent-os-status-update-2025-08-08`
+
+### Prossimi passi (operativi)
+- Verificare ruleset PR: CodeQL, CI, firma commit, review
+- Merge ordine: #7 → #8 → #9
+- Tag: `v1.0.0-prod-ready` su `main`
+
+### Runbook rapido
+- Docker DB stack: `docker compose up -d postgres neo4j redis`
+- API (compose): `docker compose up -d app`
+- API (uv): `uv run python run_backend.py`
+- FE: `$env:VITE_API_URL='http://localhost:8000'; pnpm --filter frontend dev`
+
 ## Compose run
 
 - `docker compose up -d` ha pullato le immagini; build app falliva per `.env.example` mancante
