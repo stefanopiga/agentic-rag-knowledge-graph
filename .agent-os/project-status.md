@@ -1,14 +1,15 @@
 # FisioRAG - Stato Progetto Completo (MODERNIZZATO)
 
-## 📊 OVERVIEW GENERALE
+## 📊 OVERVIEW GENERALE (Aggiornato 2025-08-09)
 
-**Milestone Completate**: 4/4 (100%) → **PROGETTO COMPLETAMENTE MODERNIZZATO ✅** (PR aperti: #7 docker-modernization→main, #8 scalability-testing→main, #9 security-hardening→main)
-**Stato Backend**: ✅ **Modernizzato con UV** (Python 3.13 + pyproject.toml)  
-**Stato Frontend**: ✅ **Modernizzato con PNPM/BUN** (React 19 + Workspace)  
-**Package Management**: ✅ **10-100x PIÙ VELOCE** (UV + PNPM + BUN)
-**Integrazione**: ✅ **SETUP UNIFICATO ULTRA-RAPIDO**
+- **Backend API**: up (healthy). Avvio: `uv run python run_backend.py`. Health: `/health`, `/health/detailed`.
+- **DB**: Postgres via Neon (`DATABASE_URL=postgresql://…neon.tech…`), **Neo4j** via Docker (`bolt://localhost:7687`), **Redis** via Docker (`redis://localhost:6379/0`).
+- **Frontend**: up (Vite dev). Avvio: `$env:VITE_API_URL='http://localhost:8000'; pnpm --filter ./frontend dev`. UI: `http://localhost:3000/`.
+- **Auth**: stub implementato (`/auth/login`, `/auth/me`).
+- **Chat**: UI caricata; invio messaggi pending (WS non usato; usare `/chat` o `/chat/stream` SSE).
+- **PR**: #7, #8, #9 aperti (verifica ruleset da GitHub).
 
-**AGGIORNAMENTO RIVOLUZIONARIO**: 🚀 **MIGRAZIONE COMPLETA A TOOL MODERNI** (2025-01-19)
+Note operative Windows: vedi `/.agent-os/instructions/project/local-runbook-windows.md`.
 
 ---
 
