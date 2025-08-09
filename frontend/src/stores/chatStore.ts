@@ -43,10 +43,44 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
       // Stream or non-stream
       if (useStream) {
-        set({ isStreaming: true });
+        set({ isStreaming: true, isLoading: true });
 
         const abortController = new AbortController();
         set({ streamError: null });
+
+        let gotAnyChunk = false;
+        const fallbackTimer = setTimeout(async () => {
+          if (get().isStreaming && !gotAnyChunk) {
+            abortController.abort();
+            try {
+              const response = await chatService.sendMessage({
+                message: content,
+                sessionId: get().currentSession || undefined,
+                tenantId: tenant.id,
+              });
+              const assistantMessage: ChatMessage = {
+                id: generateId(),
+                content: response.message,
+                role: "assistant",
+                timestamp: new Date(),
+                sources: response.sources,
+                toolCalls: response.toolCalls,
+              };
+              set((state) => ({
+                messages: [...state.messages, assistantMessage],
+                currentSession: response.sessionId,
+                isStreaming: false,
+                isLoading: false,
+              }));
+            } catch (e) {
+              set({
+                streamError: e instanceof Error ? e.message : "Stream fallback error",
+                isStreaming: false,
+                isLoading: false,
+              });
+            }
+          }
+        }, 7000);
 
         await startChatStream(
           {
@@ -56,10 +90,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
           },
           {
             onSession: (sid) => set({ currentSession: sid }),
-            onText: (chunk) => get().appendMessageChunk(chunk),
+            onText: (chunk) => {
+              gotAnyChunk = true;
+              get().appendMessageChunk(chunk);
+            },
             onTools: (tools) => get().completeMessage({ toolCalls: tools }),
-            onEnd: () => set({ isStreaming: false }),
-            onError: (err) => set({ streamError: err, isStreaming: false }),
+            onEnd: () => {
+              clearTimeout(fallbackTimer);
+              set({ isStreaming: false, isLoading: false });
+            },
+            onError: (err) => {
+              clearTimeout(fallbackTimer);
+              set({ streamError: err, isStreaming: false, isLoading: false });
+            },
           },
           abortController
         );
