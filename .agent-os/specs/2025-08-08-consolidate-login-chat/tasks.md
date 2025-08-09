@@ -16,9 +16,9 @@ Links PR:
 
 ## Parent Task B: Bring up platform (login + chat)
 
-- [ ] Start DB stack (Docker): postgres, neo4j, redis
-- [ ] Start backend FastAPI (docker compose app) o `uv run python run_backend.py`
-- [ ] Start frontend (pnpm dev) with VITE_API_URL
+- [ ] Start DB stack (Docker): postgres, neo4j, redis ⚠️ Docker Desktop non in esecuzione su Windows (errore pipe dockerDesktopLinuxEngine)
+- [ ] Start backend FastAPI (docker compose app) o `uv run python run_backend.py` ⚠️ Bloccato da Docker non avviato; alternativa uv locale disponibile
+- [ ] Start frontend (pnpm dev) with VITE_API_URL ⚠️ Dipende dall'API disponibile su 8000
 - [ ] Verify /health and /health/detailed
 - [ ] Verify UI: login page accessible
 - [ ] Verify chat screen loads after auth
