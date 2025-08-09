@@ -38,6 +38,8 @@ Fonti:
 
 ## Task Breakdown
 
+Stato SSE: COMPLETATO (stream client `services/stream.ts`, integrazione store, UI aggiorna in tempo reale; validato via DevTools `POST /chat/stream`).
+
 - [ ] Creare `services/stream.ts` (SSE):
   - [ ] Funzione `startChatStream({ message, sessionId, tenantId, userId })` che apre `EventSource` su `POST /chat/stream` via fetch-to-ES workaround (readable stream) o EventSource polyfill con query params; in alternativa usare `fetch` con `ReadableStream` e parser a linee `data:`.
   - [ ] Emettere callback per tipi evento: `session`, `text`, `tools`, `end`, `error`.
@@ -59,6 +61,8 @@ Fonti:
   - [ ] Verificare `/chat/stream` invia sequenza: `session`→`text` chunk n…→`tools` opzionale→`end`.
 
 ## Criteri di accettazione
+
+- [x] Streaming SSE funzionante (session/text/end) e UI che si aggiorna durante la digitazione del modello.
 
 - Avvio: FE su 3000 e BE su 8000; login stub funzionante (stub in `agent/api.py`, righe 208-220).
 - In chat:
