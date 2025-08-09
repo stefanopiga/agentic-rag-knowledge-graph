@@ -10,7 +10,7 @@ Links PR:
 - [x] Create PR docker-modernization → main (PR #7)
 - [x] Create PR scalability-testing → main (PR #8)
 - [x] Create PR security-hardening → main (PR #9)
-- [ ] Ensure rulesets pass (reviews, checks, signed commits)
+- [ ] Ensure rulesets pass (reviews, checks, signed commits) ⚠️ GitHub PR non accessibili da ambiente locale; collegare repository per verifiche
 - [ ] Merge in order: docker → scalability → security
 - [ ] Tag release v1.0.0-prod-ready
 
