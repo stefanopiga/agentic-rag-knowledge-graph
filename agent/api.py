@@ -422,6 +422,7 @@ async def execute_agent(
         # Create dependencies
         deps = AgentDependencies(
             session_id=session_id,
+            tenant_id=request.tenant_id,
             user_id=user_id
         )
         
@@ -591,6 +592,7 @@ async def chat_stream(request: ChatRequest):
                 # Create dependencies
                 deps = AgentDependencies(
                     session_id=session_id,
+                    tenant_id=request.tenant_id,
                     user_id=request.user_id
                 )
                 
