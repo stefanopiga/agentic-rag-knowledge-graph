@@ -4,9 +4,10 @@
 
 - Backend attivo e sano su `http://localhost:8000` (health OK)
 - Frontend attivo su `http://localhost:3000`
-- Obiettivo: chat utilizzabile end-to-end con LLM sulla documentazione.
+- Obiettivo: chat utilizzabile end-to-end con LLM sulla documentazione ingerita.
 
 Fonti:
+
 - `agent/api.py` — endpoint `/chat` e `/chat/stream` (SSE), risposta `ChatResponse` con `message`, `session_id`, `tools_used`, `sources`.
 - `agent/models.py` — modelli `ChatRequest`, `ChatResponse`, `ToolCall`, `DocumentMetadata`.
 - `frontend/src/services/chat.ts` — invio payload in snake_case; mapping `tools_used`→`toolCalls`, `session_id`→`sessionId`.
@@ -67,6 +68,19 @@ Fonti:
 - Nessun errore console in FE durante sessione tipica.
 
 ## Piano di test
+
+### DevTools: come trovare `POST /chat/stream`
+
+1. Apri Chrome DevTools → Network.
+2. In alto, clicca sul filtro “Fetch/XHR” o “XHR/Fetch”.
+3. Nel box Filter digita: `chat/stream`.
+4. Invia un messaggio dalla chat per generare la richiesta.
+5. Clicca sulla riga corrispondente:
+   - Headers: Method `POST`, Request URL `http://localhost:8000/chat/stream`, Response Headers `Content-Type: text/event-stream`, `Connection: keep-alive`.
+   - Payload: JSON con `message`, `tenant_id`, opzionale `session_id`.
+   - EventStream/Response: righe `data: {"type":"session"...}`, molte `data: {"type":"text","content":"..."}`, eventuale `data: {"type":"tools"...}`, infine `data: {"type":"end"}`.
+
+### Piano di test
 
 - Non-streaming:
   - Inviare messaggio via `chatService.sendMessage`; verificare risposta coerente con `ChatResponse` (`agent/models.py`).
