@@ -16,11 +16,11 @@ Links PR:
 
 ## Parent Task B: Bring up platform (login + chat)
 
-- [ ] Start DB stack (Docker): postgres, neo4j, redis ⚠️ Docker Desktop non in esecuzione su Windows (errore pipe dockerDesktopLinuxEngine)
-- [ ] Start backend FastAPI (docker compose app) o `uv run python run_backend.py` ⚠️ Bloccato: Docker non avviato; env `DATABASE_URL` usa schema `postgresql+asyncpg` non supportato da asyncpg; Neo4j/Redis non disponibili
-- [ ] Start frontend (pnpm dev) with VITE_API_URL ⚠️ Dipende dall'API disponibile su 8000
-- [ ] Verify /health and /health/detailed
-- [ ] Verify UI: login page accessible
+- [x] Start DB stack (Docker): neo4j, redis (Postgres via Neon). Note: usare `DATABASE_URL` Neon ⚠️ Docker Desktop non in esecuzione su Windows (errore pipe dockerDesktopLinuxEngine)
+- [x] Start backend FastAPI (uv) — `DATABASE_URL` Neon, `NEO4J_URI=bolt://localhost:7687`, `REDIS_URL=redis://localhost:6379/0`
+- [x] Start frontend (pnpm dev) with VITE_API_URL (`$env:VITE_API_URL='http://localhost:8000'; pnpm --filter ./frontend dev`) ⚠️ Dipende dall'API disponibile su 8000
+- [x] Verify /health and /health/detailed (status healthy)
+- [ ] Verify UI: login page accessible (auth stub attivo)
 - [ ] Verify chat screen loads after auth
 
 ## Parent Task C: Wire auth endpoints if missing
