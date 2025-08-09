@@ -62,6 +62,8 @@ from .tools import (
     DocumentListInput
 )
 
+from uuid import UUID
+
 # Load environment variables
 load_dotenv()
 
@@ -74,6 +76,7 @@ APP_PORT = int(os.getenv("APP_PORT", 8000))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 ENABLE_METRICS = os.getenv("ENABLE_METRICS", "true").lower() == "true"
 METRICS_PORT = int(os.getenv("METRICS_PORT", 9090))
+DISABLE_DB_PERSISTENCE = os.getenv("DISABLE_DB_PERSISTENCE", "false").lower() == "true"
 
 # Configure logging
 logging.basicConfig(
@@ -220,13 +223,25 @@ async def auth_me():
 # Helper functions for agent execution
 async def get_or_create_session(request: ChatRequest) -> str:
     """Get existing session or create new one."""
+    # Normalize tenant_id to UUID in development to handle stub IDs like "t-1"
+    try:
+        tenant_uuid: UUID = UUID(str(request.tenant_id))
+    except Exception:
+        # Fallback dev UUID (stable)
+        tenant_uuid = UUID(os.getenv("DEV_TENANT_UUID", "00000000-0000-0000-0000-000000000001"))
+
+    if DISABLE_DB_PERSISTENCE:
+        # Return a deterministic UUID in dev mode without DB persistence
+        return os.getenv("DEV_SESSION_UUID", "11111111-1111-1111-1111-111111111111")
+
     if request.session_id:
-        session = await get_session(request.session_id)
+        session = await get_session(request.session_id, tenant_id=tenant_uuid)
         if session:
             return request.session_id
     
     # Create new session
     return await create_session(
+        tenant_id=tenant_uuid,
         user_id=request.user_id,
         metadata=request.metadata
     )
@@ -234,6 +249,7 @@ async def get_or_create_session(request: ChatRequest) -> str:
 
 async def get_conversation_context(
     session_id: str,
+    tenant_id: str,
     max_messages: int = 10
 ) -> List[Dict[str, str]]:
     """
@@ -246,7 +262,14 @@ async def get_conversation_context(
     Returns:
         List of messages
     """
-    messages = await get_session_messages(session_id, limit=max_messages)
+    # Ensure tenant_id is UUID
+    try:
+        tenant_uuid_ctx: UUID = UUID(str(tenant_id))
+    except Exception:
+        tenant_uuid_ctx = UUID(os.getenv("DEV_TENANT_UUID", "00000000-0000-0000-0000-000000000001"))
+    if DISABLE_DB_PERSISTENCE:
+        return []
+    messages = await get_session_messages(session_id, tenant_id=tenant_uuid_ctx, limit=max_messages)
     
     return [
         {
@@ -334,6 +357,7 @@ def extract_tool_calls(result) -> List[ToolCall]:
 
 async def save_conversation_turn(
     session_id: str,
+    tenant_id: str,
     user_message: str,
     assistant_message: str,
     metadata: Optional[Dict[str, Any]] = None
@@ -348,8 +372,18 @@ async def save_conversation_turn(
         metadata: Optional metadata
     """
     # Save user message
+    # Ensure tenant_id is UUID
+    try:
+        tenant_uuid_save: UUID = UUID(str(tenant_id))
+    except Exception:
+        tenant_uuid_save = UUID(os.getenv("DEV_TENANT_UUID", "00000000-0000-0000-0000-000000000001"))
+
+    if DISABLE_DB_PERSISTENCE:
+        return
+
     await add_message(
         session_id=session_id,
+        tenant_id=tenant_uuid_save,
         role="user",
         content=user_message,
         metadata=metadata or {}
@@ -358,6 +392,7 @@ async def save_conversation_turn(
     # Save assistant message
     await add_message(
         session_id=session_id,
+        tenant_id=tenant_uuid_save,
         role="assistant",
         content=assistant_message,
         metadata=metadata or {}
@@ -367,6 +402,7 @@ async def save_conversation_turn(
 async def execute_agent(
     message: str,
     session_id: str,
+    tenant_id: str,
     user_id: Optional[str] = None,
     save_conversation: bool = True
 ) -> tuple[str, List[ToolCall]]:
@@ -390,7 +426,7 @@ async def execute_agent(
         )
         
         # Get conversation context
-        context = await get_conversation_context(session_id)
+        context = await get_conversation_context(session_id, tenant_id=tenant_id)
         
         # Build prompt with context
         full_prompt = message
@@ -411,6 +447,7 @@ async def execute_agent(
         if save_conversation:
             await save_conversation_turn(
                 session_id=session_id,
+                tenant_id=tenant_id,
                 user_message=message,
                 assistant_message=response,
                 metadata={
@@ -428,6 +465,7 @@ async def execute_agent(
         if save_conversation:
             await save_conversation_turn(
                 session_id=session_id,
+                tenant_id=tenant_id,
                 user_message=message,
                 assistant_message=error_response,
                 metadata={"error": str(e)}
@@ -522,6 +560,7 @@ async def chat(request: ChatRequest):
         response, tools_used = await execute_agent(
             message=request.message,
             session_id=session_id,
+            tenant_id=request.tenant_id,
             user_id=request.user_id
         )
         
@@ -556,7 +595,7 @@ async def chat_stream(request: ChatRequest):
                 )
                 
                 # Get conversation context
-                context = await get_conversation_context(session_id)
+                context = await get_conversation_context(session_id, tenant_id=request.tenant_id)
                 
                 # Build input with context
                 full_prompt = request.message
@@ -567,13 +606,15 @@ async def chat_stream(request: ChatRequest):
                     ])
                     full_prompt = f"Previous conversation:\n{context_str}\n\nCurrent question: {request.message}"
                 
-                # Save user message immediately
-                await add_message(
-                    session_id=session_id,
-                    role="user",
-                    content=request.message,
-                    metadata={"user_id": request.user_id}
-                )
+                # Save user message immediately (skip when persistence disabled)
+                if not DISABLE_DB_PERSISTENCE:
+                    await add_message(
+                        session_id=session_id,
+                        tenant_id=request.tenant_id,
+                        role="user",
+                        content=request.message,
+                        metadata={"user_id": request.user_id}
+                    )
                 
                 full_response = ""
                 
@@ -612,16 +653,18 @@ async def chat_stream(request: ChatRequest):
                     ]
                     yield f"data: {json.dumps({'type': 'tools', 'tools': tools_data})}\n\n"
                 
-                # Save assistant response
-                await add_message(
-                    session_id=session_id,
-                    role="assistant",
-                    content=full_response,
-                    metadata={
-                        "streamed": True,
-                        "tool_calls": len(tools_used)
-                    }
-                )
+                # Save assistant response (skip when persistence disabled)
+                if not DISABLE_DB_PERSISTENCE:
+                    await add_message(
+                        session_id=session_id,
+                        tenant_id=request.tenant_id,
+                        role="assistant",
+                        content=full_response,
+                        metadata={
+                            "streamed": True,
+                            "tool_calls": len(tools_used)
+                        }
+                    )
                 
                 yield f"data: {json.dumps({'type': 'end'})}\n\n"
                 
