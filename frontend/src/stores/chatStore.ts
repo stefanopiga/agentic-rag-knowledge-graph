@@ -48,7 +48,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         const abortController = new AbortController();
         set({ streamError: null });
 
-        let gotAnyChunk = false;
+        let gotAnyChunk = false; // set true on session to avoid early fallback
         const fallbackTimer = setTimeout(async () => {
           if (get().isStreaming && !gotAnyChunk) {
             abortController.abort();
@@ -89,7 +89,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             tenant_id: tenant.id,
           },
           {
-            onSession: (sid) => set({ currentSession: sid }),
+            onSession: (sid) => { gotAnyChunk = true; set({ currentSession: sid }); },
             onText: (chunk) => {
               gotAnyChunk = true;
               get().appendMessageChunk(chunk);
