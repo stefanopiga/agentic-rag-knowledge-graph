@@ -71,6 +71,18 @@ Fonti:
 
 ### DevTools: come trovare `POST /chat/stream`
 
+### Troubleshooting: SSE ok ma UI non aggiorna
+
+- Verifica in Console:
+  - Log `SSE session <id>`, `SSE text chunk <chunk>`, `SSE end`, `SSE error`.
+  - Log `appendMessageChunk called with: <chunk>`.
+- Se i log arrivano ma non vedi testo in UI:
+  - Conferma che in `MessageBubble` il contenuto è renderizzato da `message.content` con `whitespace-pre-wrap`.
+  - Controlla che l’array `messages` cresca o che l’ultimo messaggio assistant venga aggiornato.
+- Se i log non arrivano:
+  - Controlla la richiesta Network `/chat/stream` e la presenza delle righe `data:` nel tab EventStream/Response.
+  - Verifica che `sendMessage` sia invocato con streaming (parametro `useStream` di default `true`).
+
 1. Apri Chrome DevTools → Network.
 2. In alto, clicca sul filtro “Fetch/XHR” o “XHR/Fetch”.
 3. Nel box Filter digita: `chat/stream`.

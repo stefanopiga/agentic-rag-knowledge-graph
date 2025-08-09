@@ -89,17 +89,20 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             tenant_id: tenant.id,
           },
           {
-            onSession: (sid) => { gotAnyChunk = true; set({ currentSession: sid }); },
+            onSession: (sid) => { gotAnyChunk = true; console.debug("SSE session", sid); set({ currentSession: sid }); },
             onText: (chunk) => {
               gotAnyChunk = true;
+              console.debug("SSE text chunk", chunk);
               get().appendMessageChunk(chunk);
             },
             onTools: (tools) => get().completeMessage({ toolCalls: tools }),
             onEnd: () => {
+              console.debug("SSE end");
               clearTimeout(fallbackTimer);
               set({ isStreaming: false, isLoading: false });
             },
             onError: (err) => {
+              console.error("SSE error", err);
               clearTimeout(fallbackTimer);
               set({ streamError: err, isStreaming: false, isLoading: false });
             },
@@ -173,6 +176,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   appendMessageChunk: (chunk: string) => {
+    console.debug("appendMessageChunk called with:", chunk);
+
     set((state) => {
       const messages = [...state.messages];
       const lastMessage = messages[messages.length - 1];
