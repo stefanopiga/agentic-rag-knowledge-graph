@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { type ChatState, type ChatActions } from "../types/chat";
 import { type ChatMessage } from "../types/api";
 import { chatService } from "../services/chat";
+import { startChatStream } from "@/services/stream";
 import { useAuthStore } from "./authStore";
 
 interface ChatStore extends ChatState, ChatActions {}
@@ -15,9 +16,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   isLoading: false,
   error: null,
   isConnected: true,
+  isStreaming: false,
+  streamError: null,
 
   // Actions
-  sendMessage: async (content: string) => {
+  sendMessage: async (content: string, useStream: boolean = true) => {
     const { tenant } = useAuthStore.getState();
     if (!tenant) {
       throw new Error("No tenant selected");
@@ -37,6 +40,32 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       set((state) => ({
         messages: [...state.messages, userMessage],
       }));
+
+      // Stream or non-stream
+      if (useStream) {
+        set({ isStreaming: true });
+
+        const abortController = new AbortController();
+        set({ streamError: null });
+
+        await startChatStream(
+          {
+            message: content,
+            session_id: get().currentSession || undefined,
+            tenant_id: tenant.id,
+          },
+          {
+            onSession: (sid) => set({ currentSession: sid }),
+            onText: (chunk) => get().appendMessageChunk(chunk),
+            onTools: (tools) => get().completeMessage({ toolCalls: tools }),
+            onEnd: () => set({ isStreaming: false }),
+            onError: (err) => set({ streamError: err, isStreaming: false }),
+          },
+          abortController
+        );
+
+        return;
+      }
 
       // Send to API
       const response = await chatService.sendMessage({
