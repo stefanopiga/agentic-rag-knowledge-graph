@@ -18,7 +18,11 @@ from prometheus_client import (
 )
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from fastapi import FastAPI, Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+try:
+    # FastAPI >=0.115 moved BaseHTTPMiddleware import path in Starlette
+    from starlette.middleware.base import BaseHTTPMiddleware
+except Exception:  # pragma: no cover
+    from fastapi.middleware.base import BaseHTTPMiddleware
 
 # Initialize structured logging
 structlog.configure(
@@ -535,11 +539,15 @@ def setup_monitoring(app: FastAPI, enable_metrics: bool = True) -> Optional[Inst
     instrumentator.instrument(app)
     
     # Set application info
-    fisiorag_info.info({
-        'version': '0.1.0',
-        'environment': os.getenv('APP_ENV', 'development'),
-        'startup_time': datetime.now().isoformat()
-    })
+    try:
+        fisiorag_info.info({
+            'version': '0.1.0',
+            'environment': os.getenv('APP_ENV', 'development'),
+            'startup_time': datetime.now().isoformat()
+        })
+    except Exception:
+        # Best-effort: skip Info if client incompatible
+        pass
     
     logger.info("Monitoring setup completed", metrics_enabled=True)
     

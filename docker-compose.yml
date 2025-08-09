@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   app:
     build: .
@@ -7,13 +5,15 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      # Use a named volume for the container's virtualenv to avoid host shadowing
+      - app_venv:/app/.venv
     depends_on:
       - postgres
       - neo4j
       - redis
     env_file:
       - .env
-    command: uvicorn agent.api:app --host 0.0.0.0 --port 8000 --reload
+    command: uv run uvicorn agent.api:app --host 0.0.0.0 --port 8000 --proxy-headers
 
   postgres:
     image: pgvector/pgvector:pg15
@@ -55,3 +55,4 @@ volumes:
   postgres_data:
   neo4j_data:
   redis_data:
+  app_venv:

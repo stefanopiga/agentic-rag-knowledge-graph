@@ -75,5 +75,12 @@ fi
 echo "🎯 Environment validated successfully!"
 echo "🚀 Starting FisioRAG application..."
 
+# Se il venv montato è vuoto (volume appena creato), inizializzalo dalla snapshot
+if [ ! -d "/app/.venv/bin" ] || [ -z "$(ls -A /app/.venv 2>/dev/null)" ]; then
+  echo "🧩 Initializing virtualenv in /app/.venv from image snapshot..."
+  rm -rf /app/.venv
+  cp -a /opt/app-venv /app/.venv
+fi
+
 # Esegui il comando passato
 exec "$@"

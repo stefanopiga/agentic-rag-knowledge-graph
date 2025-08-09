@@ -168,6 +168,55 @@ app.add_middleware(MonitoringMiddleware)
 instrumentator = setup_monitoring(app, enable_metrics=ENABLE_METRICS)
 
 
+# ------------------------------------
+# Minimal Auth (development placeholder)
+# ------------------------------------
+from pydantic import BaseModel
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class AuthUser(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: str = "admin"
+
+
+class AuthTenant(BaseModel):
+    id: str
+    name: str
+    slug: str
+    created_at: str
+
+
+class AuthResponseModel(BaseModel):
+    user: AuthUser
+    tenant: AuthTenant
+    token: str
+    refreshToken: str
+
+
+_DEV_TOKEN = os.getenv("DEV_AUTH_TOKEN", "dev-token")
+
+
+@app.post("/auth/login", response_model=AuthResponseModel)
+async def auth_login(payload: LoginRequest):
+    # Minimal stub: accept any credentials and return a fixed token and tenant
+    user = AuthUser(id="u-1", email=payload.email, name="Dev User")
+    tenant = AuthTenant(id="t-1", name="Dev Tenant", slug="dev", created_at=datetime.now().isoformat())
+    return AuthResponseModel(user=user, tenant=tenant, token=_DEV_TOKEN, refreshToken=_DEV_TOKEN)
+
+
+@app.get("/auth/me", response_model=AuthUser)
+async def auth_me():
+    # Minimal stub: return the same dev user
+    return AuthUser(id="u-1", email="dev@example.com", name="Dev User")
+
+
 # Helper functions for agent execution
 async def get_or_create_session(request: ChatRequest) -> str:
     """Get existing session or create new one."""

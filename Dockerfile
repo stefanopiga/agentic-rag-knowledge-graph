@@ -40,6 +40,8 @@ COPY --from=builder /usr/local/bin/uvx /usr/local/bin/uvx
 
 # Copia l'ambiente virtuale UV dallo stage di build
 COPY --from=builder /app/.venv /app/.venv
+# Mantieni una copia snapshot del venv per inizializzare volumi nominati
+RUN mkdir -p /opt && cp -a /app/.venv /opt/app-venv
 
 # Attiva l'ambiente virtuale UV
 ENV PATH="/app/.venv/bin:$PATH"

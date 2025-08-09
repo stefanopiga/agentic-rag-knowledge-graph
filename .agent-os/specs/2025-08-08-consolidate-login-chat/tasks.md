@@ -17,7 +17,7 @@ Links PR:
 ## Parent Task B: Bring up platform (login + chat)
 
 - [ ] Start DB stack (Docker): postgres, neo4j, redis ⚠️ Docker Desktop non in esecuzione su Windows (errore pipe dockerDesktopLinuxEngine)
-- [ ] Start backend FastAPI (docker compose app) o `uv run python run_backend.py` ⚠️ Bloccato da Docker non avviato; alternativa uv locale disponibile
+- [ ] Start backend FastAPI (docker compose app) o `uv run python run_backend.py` ⚠️ Bloccato: Docker non avviato; env `DATABASE_URL` usa schema `postgresql+asyncpg` non supportato da asyncpg; Neo4j/Redis non disponibili
 - [ ] Start frontend (pnpm dev) with VITE_API_URL ⚠️ Dipende dall'API disponibile su 8000
 - [ ] Verify /health and /health/detailed
 - [ ] Verify UI: login page accessible
@@ -25,8 +25,8 @@ Links PR:
 
 ## Parent Task C: Wire auth endpoints if missing
 
-- [ ] Confirm /auth/login backend route exists
-- [ ] If missing, implement minimal FastAPI auth: /auth/login, /auth/me
+- [x] Confirm /auth/login backend route exists (stub implementato in `agent/api.py`)
+- [x] If missing, implement minimal FastAPI auth: /auth/login, /auth/me (stub di sviluppo)
 - [ ] Connect frontend auth store to real backend
 - [ ] Seed one test user in Postgres
 
