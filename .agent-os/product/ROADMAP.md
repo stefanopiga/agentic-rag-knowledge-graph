@@ -1,5 +1,12 @@
 # Roadmap di FisioRAG
 
+## Fase 4: Correzione Chat Frontend (in corso)
+
+- [ ] Fix chat frontend e integrazione streaming SSE con backend:
+  - Specifica: `.agent-os/specs/2025-08-09-fix-frontend-chat/tasks.md`
+  - Obiettivo: rendere utilizzabile la chat con LLM sulla documentazione
+
+
 ## Fase 0: Implementazione Esistente
 
 Le seguenti funzionalità costituiscono il core attuale del sistema:

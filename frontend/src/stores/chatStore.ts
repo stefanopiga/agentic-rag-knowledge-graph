@@ -14,7 +14,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   currentSession: null,
   isLoading: false,
   error: null,
-  isConnected: false,
+  isConnected: true,
 
   // Actions
   sendMessage: async (content: string) => {

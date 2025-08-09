@@ -138,7 +138,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Input */}
       <MessageInput
         onSend={handleSendMessage}
-        disabled={isLoading || !isConnected}
+        disabled={isLoading}
         placeholder={
           !isConnected
             ? "Connessione in corso..."
