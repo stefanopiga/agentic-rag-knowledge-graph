@@ -33,3 +33,4 @@ Come sviluppatore su Windows, voglio un insieme di comandi da terminale cmd per 
 1. Sequenza comandi Windows cmd verificata per full reset DB.
 2. Script `scripts\reset_db_windows.cmd` creato e funzionante.
 3. Documentazione breve in `spec-lite.md` e dettagli tecnici in `technical-spec.md`.
+4. Config Compose aggiornata per variabili runtime (`OPENAI_API_KEY`, `NEO4J_URI`, `REDIS_URL`).

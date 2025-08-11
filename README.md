@@ -132,11 +132,22 @@ pnpm test
 
 ### 3. **Database Setup**
 
-```bash
-# PostgreSQL + pgvector: OK
-# Neo4j: OK
-# Redis: ❌ CONNECTION REFUSED
+```powershell
+# Reset completo DB (Windows)
+./scripts/reset_db_windows.cmd
+
+# Avvio servizi
+docker compose up -d
+
+# Verifica health API
+curl http://localhost:8000/health
 ```
+
+Note Compose:
+- `docker-compose.yml` imposta per `app`:
+  - `OPENAI_API_KEY=${LLM_API_KEY}`
+  - `NEO4J_URI=bolt://neo4j:7687`
+  - `REDIS_URL=redis://redis:6379/0`
 
 ---
 
@@ -284,12 +295,12 @@ curl http://localhost:8000/health/detailed
 
 ### 2) Avvio UI (Vite)
 ```powershell
-$env:VITE_API_URL='http://localhost:8000'
+$env:VITE_API_BASE_URL='http://localhost:8000'
 pnpm --filter frontend dev
-# UI: http://localhost:5173
+# UI: http://localhost:3000
 ```
 
 Note
 - Il container `app` espone l’API FastAPI su `http://localhost:8000`
-- La UI in dev gira su `http://localhost:5173` e usa `VITE_API_URL`
+- La UI in dev gira su `http://localhost:3000` e usa `VITE_API_BASE_URL`
 - `.env.example` è solo un template; `.env` contiene i tuoi segreti

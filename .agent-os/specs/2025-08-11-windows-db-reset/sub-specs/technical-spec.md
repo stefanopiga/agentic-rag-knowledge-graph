@@ -4,6 +4,13 @@ Riferimento: `.agent-os/specs/2025-08-11-windows-db-reset/spec.md`
 
 ## Requisiti Tecnici
 
+- Variabili aggiuntive per ambiente Compose applicate al servizio `app` in `docker-compose.yml`:
+  - `OPENAI_API_KEY=${LLM_API_KEY}`
+  - `NEO4J_URI=bolt://neo4j:7687`
+  - `REDIS_URL=redis://redis:6379/0`
+- Endpoint health: `http://localhost:8000/health` (200 dopo fix env)
+
+
 - Docker Desktop installato e in esecuzione.
 - Uso di `docker-compose.yml` del progetto; Postgres monta `sql/schema_with_auth.sql` su `docker-entrypoint-initdb.d` (inizializza al primo bootstrap volume).
 - Volumi: `postgres_data`, `neo4j_data`, `redis_data` definiti nello `docker-compose.yml`.
