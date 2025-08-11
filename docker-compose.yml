@@ -13,6 +13,8 @@ services:
       - redis
     env_file:
       - .env
+    environment:
+      OPENAI_API_KEY: ${LLM_API_KEY}
     command: uv run uvicorn agent.api:app --host 0.0.0.0 --port 8000 --proxy-headers
 
   postgres:
