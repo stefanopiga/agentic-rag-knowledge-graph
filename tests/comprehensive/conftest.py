@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 
 # Carica le variabili d'ambiente prima di ogni altra cosa
 load_dotenv()
+# Modalità offline per embeddings durante i test
+os.environ.setdefault("EMBEDDINGS_OFFLINE", "1")
 
 # Setup environment
 os.environ.setdefault("APP_ENV", "test")
@@ -31,15 +33,17 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s - %(name)s - %(le
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def event_loop():
-    """Crea un loop di eventi per l'intera sessione di test."""
+    """Crea un loop di eventi per ogni test (evita ScopeMismatch con pytest-asyncio)."""
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
-    yield loop
-    loop.close()
+    try:
+        yield loop
+    finally:
+        loop.close()
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 async def manage_database_connections(event_loop):
     """
     Gestisce l'inizializzazione e la chiusura delle connessioni al database
@@ -50,6 +54,7 @@ async def manage_database_connections(event_loop):
     await initialize_graph()
     
     # Esegui lo schema SQL per assicurarti che il database sia pulito e pronto
+    # Applica schema solo se necessario in questo test function-scope
     try:
         async with db_pool.acquire() as conn:
             schema_path = project_root / "sql" / "schema_with_auth.sql"
@@ -61,7 +66,7 @@ async def manage_database_connections(event_loop):
 
     yield
 
-    # Chiudi le connessioni alla fine di tutti i test
+    # Chiudi le connessioni alla fine del test
     await close_graph()
     await close_database()
 

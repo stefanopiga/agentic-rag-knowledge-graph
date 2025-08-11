@@ -51,7 +51,15 @@ class GraphitiClient:
             self.graphiti = Graphiti(self.neo4j_uri, self.neo4j_user, self.neo4j_password, llm_client=llm_client, embedder=embedder)
             await self.graphiti.build_indices_and_constraints()
             # Add constraint for tenant_id on Episode nodes
-            await self.graphiti.driver.execute_query("CREATE CONSTRAINT IF NOT EXISTS FOR (n:Episode) REQUIRE n.tenant_id IS NOT NULL")
+            # Neo4j Community Edition does not support property existence constraints.
+            # Use an index instead, compatible with Community and sufficient for filtering.
+            try:
+                await self.graphiti.driver.execute_query(
+                    "CREATE INDEX episode_tenant_id_index IF NOT EXISTS FOR (n:Episode) ON (n.tenant_id)"
+                )
+            except Exception:
+                # Best-effort: ignore index creation failures to avoid blocking startup
+                logger.warning("Skipping Episode(tenant_id) index creation; proceeding without it")
 
             self._initialized = True
             logger.info("Graphiti client initialized successfully.")
@@ -174,9 +182,9 @@ async def get_entity_relationships(entity: str, tenant_id: UUID, depth: int = 2)
 async def test_graph_connection() -> bool:
     """Test the graph database connection."""
     try:
-        if graph_client and graph_client._initialized:
-            # Simple test query to verify connection
-            await graph_client.graphiti.get_all_edges(limit=1)
+        if graph_client and graph_client._initialized and graph_client.graphiti:
+            # Simple test query compatible with Community Edition
+            await graph_client.graphiti.driver.execute_query("RETURN 1 AS ok")
             return True
         return False
     except Exception as e:
