@@ -33,6 +33,9 @@ logger = logging.getLogger(__name__)
 embedding_client = get_embedding_client()
 EMBEDDING_MODEL = get_embedding_model()
 
+# Offline/CI mode to avoid external API calls during tests
+OFFLINE_EMBEDDINGS = os.getenv("EMBEDDINGS_OFFLINE", "")
+
 
 class EmbeddingGenerator:
     """Generates embeddings for document chunks."""
@@ -85,6 +88,9 @@ class EmbeddingGenerator:
         if len(text) > self.config["max_tokens"] * 4:  # Rough token estimation
             text = text[:self.config["max_tokens"] * 4]
         
+        if OFFLINE_EMBEDDINGS:
+            return [0.0] * self.config["dimensions"]
+
         for attempt in range(self.max_retries):
             try:
                 response = await embedding_client.embeddings.create(
@@ -141,6 +147,9 @@ class EmbeddingGenerator:
             
             processed_texts.append(text)
         
+        if OFFLINE_EMBEDDINGS:
+            return [[0.0] * self.config["dimensions"] for _ in texts]
+
         for attempt in range(self.max_retries):
             try:
                 response = await embedding_client.embeddings.create(
