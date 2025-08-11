@@ -54,7 +54,9 @@ class DocumentIngestionPipeline:
     async def initialize(self):
         if not self._initialized:
             await initialize_database()
-            await self.graph_builder.initialize()
+            # Inizializza Graph solo se richiesto dalla config
+            if not getattr(self.config, "skip_graph_building", False):
+                await self.graph_builder.initialize()
             await self.incremental_manager.initialize()
             self._initialized = True
 
@@ -130,11 +132,16 @@ class DocumentIngestionPipeline:
         start_time = datetime.now()
         document_data = self._read_document(file_path)
         
-        chunks = await self.chunker.chunk_document(
+        # Support both async and sync chunkers
+        chunk_result = self.chunker.chunk_document(
             content=document_data["content"],
             title=document_data["title"],
             source=os.path.relpath(file_path, self.documents_folder)
         )
+        if asyncio.iscoroutine(chunk_result):
+            chunks = await chunk_result
+        else:
+            chunks = chunk_result
         
         if not chunks:
             return IngestionResult(
@@ -161,6 +168,8 @@ class DocumentIngestionPipeline:
 
         graph_result = {"episodes_created": 0, "errors": []}
         if not self.config.skip_graph_building:
+            if not self.graph_builder._initialized:
+                await self.graph_builder.initialize()
             graph_result = await self.graph_builder.add_document_to_graph(
                 chunks=embedded_chunks,
                 document_title=document_data["title"],
@@ -189,7 +198,9 @@ class DocumentIngestionPipeline:
         else:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-            return {"title": os.path.splitext(os.path.basename(file_path))[0], "content": content}
+            base = os.path.splitext(os.path.basename(file_path))[0]
+            title = base.replace('_', ' ').lower()
+            return {"title": title, "content": content}
 
     async def _get_tenant_id_from_slug(self, slug: str) -> UUID:
         async with db_pool.acquire() as conn:
