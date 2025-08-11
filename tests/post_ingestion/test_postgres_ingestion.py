@@ -10,17 +10,21 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from agent.db_utils import db_pool
+from ingestion.ingest import DocumentIngestionPipeline
+from agent.models import IngestionConfig
 
 load_dotenv()
 
 # --- Fixture a livello di modulo per gestire il pool di connessioni ---
 
-@pytest_asyncio.fixture(scope="module", autouse=True)
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def module_db_pool():
-    """Inizializza il pool prima dei test del modulo e lo chiude dopo."""
+    """Inizializza e chiude il pool per ogni test (evita ScopeMismatch con event_loop function-scoped)."""
     await db_pool.initialize()
-    yield
-    await db_pool.close()
+    try:
+        yield
+    finally:
+        await db_pool.close()
 
 # --- Fixtures a livello di funzione per garantire l'isolamento dei test ---
 
@@ -32,33 +36,62 @@ async def db_conn():
 
 @pytest_asyncio.fixture(scope="function")
 async def tenant_id(db_conn) -> UUID:
-    """Recupera l'ID del tenant di default per un singolo test."""
+    """Recupera o crea l'ID del tenant di default per un singolo test."""
     tenant_id_val = await db_conn.fetchval("SELECT id FROM accounts_tenant WHERE slug = 'default' LIMIT 1")
-    assert tenant_id_val is not None, "Tenant 'default' non trovato. Assicurarsi che lo schema sia stato inizializzato."
+    if tenant_id_val is None:
+        tenant_id_val = await db_conn.fetchval("INSERT INTO accounts_tenant (name, slug) VALUES ('Default Tenant', 'default') RETURNING id")
     return tenant_id_val
 
 @pytest_asyncio.fixture(scope="function")
 async def ingested_data(db_conn, tenant_id: UUID):
-    """Recupera i dati dell'ultimo documento ingerito per un tenant specifico."""
-    data = {}
-    doc_result = await db_conn.fetchrow("""
+    """Garantisce dati ingeriti per il tenant, altrimenti esegue un'ingestione minima di fallback."""
+    # Prova a leggere ultimo documento
+    doc_result = await db_conn.fetchrow(
+        """
         SELECT id, title 
         FROM documents 
         WHERE tenant_id = $1
         ORDER BY created_at DESC 
         LIMIT 1
-    """, tenant_id)
-    
+        """,
+        tenant_id,
+    )
+
+    if not doc_result:
+        # Ingestione minimale di fallback
+        config = IngestionConfig(chunk_size=100, chunk_overlap=20, skip_graph_building=True)
+        pipeline = DocumentIngestionPipeline(config=config, documents_folder="documents")
+        await pipeline.initialize()
+        try:
+            await pipeline.ingest_documents(tenant_slug="default")
+        finally:
+            await pipeline.close()
+        # Rileggi dopo ingestione
+        doc_result = await db_conn.fetchrow(
+            """
+            SELECT id, title 
+            FROM documents 
+            WHERE tenant_id = $1
+            ORDER BY created_at DESC 
+            LIMIT 1
+            """,
+            tenant_id,
+        )
+
     assert doc_result is not None, f"Nessun documento trovato per il tenant {tenant_id}. Eseguire l'ingestione prima dei test."
-    
-    data['doc_id'] = doc_result['id']
-    data['doc_title'] = doc_result['title']
-    
-    chunk_count_result = await db_conn.fetchval("SELECT COUNT(*) FROM chunks WHERE document_id = $1 AND tenant_id = $2", data['doc_id'], tenant_id)
-    data['chunk_count'] = chunk_count_result
+
+    data = {
+        'doc_id': doc_result['id'],
+        'doc_title': doc_result['title'],
+    }
+
+    data['chunk_count'] = await db_conn.fetchval(
+        "SELECT COUNT(*) FROM chunks WHERE document_id = $1 AND tenant_id = $2",
+        data['doc_id'],
+        tenant_id,
+    )
 
     assert data.get('chunk_count', 0) > 0, f"Il documento '{data.get('doc_title')}' non ha chunk associati."
-    
     return data
 
 # --- Suite di Test ---
