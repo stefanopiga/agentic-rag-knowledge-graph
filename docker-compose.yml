@@ -15,6 +15,8 @@ services:
       - .env
     environment:
       OPENAI_API_KEY: ${LLM_API_KEY}
+      NEO4J_URI: bolt://neo4j:7687
+      REDIS_URL: redis://redis:6379/0
     command: uv run uvicorn agent.api:app --host 0.0.0.0 --port 8000 --proxy-headers
 
   postgres:
