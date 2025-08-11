@@ -13,11 +13,11 @@
   - [x] 2.3 Aggiungere wait-loop `pg_isready`
   - [x] 2.4 Aggiungere check estensione `vector`
 
-- [ ] 3. Documentazione
-  - [ ] 3.1 Aggiornare `spec.md`/`spec-lite.md`
-  - [ ] 3.2 Aggiungere sezione README con istruzioni Windows
+- [x] 3. Documentazione
+  - [x] 3.1 Aggiornare `spec.md`/`spec-lite.md`
+  - [x] 3.2 Aggiungere sezione README con istruzioni Windows
 
 - [x] 4. Test
   - [x] 4.1 Eseguire script e verificare bootstrap schema
-  - [ ] 4.2 Eseguire `uv run pytest -q tests/comprehensive/test_database_connections.py`
-  - [ ] 4.3 Verificare che `match_chunks` funzioni (query di prova)
+  - [x] 4.2 Eseguire `uv run pytest -q tests/comprehensive/test_database_connections.py`
+  - [x] 4.3 Verificare che `match_chunks` funzioni (query di prova)
