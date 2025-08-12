@@ -1,0 +1,63 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-8.4.1, pluggy-1.6.0 -- C:\Users\user\Desktop\D\_MCPserver\mcp\grafo+LLM\agentic-rag-knowledge-graph\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\user\Desktop\D\_MCPserver\mcp\grafo+LLM\agentic-rag-knowledge-graph
+configfile: pytest.ini
+plugins: anyio-4.10.0, asyncio-1.1.0, cov-6.2.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 3 items
+
+tests/system/test_api_health_endpoints.py::test_health_endpoint_ok FAILED [ 33%]
+tests/system/test_api_health_endpoints.py::test_detailed_health_endpoint FAILED [ 66%]
+tests/system/test_api_health_endpoints.py::test_database_status_endpoint FAILED [100%]
+
+================================== FAILURES ===================================
+___________________________ test_health_endpoint_ok ___________________________
+tests\system\test_api_health_endpoints.py:14: in test_health_endpoint_ok
+    transport = ASGITransport(app=app, lifespan="off")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: ASGITransport.__init__() got an unexpected keyword argument 'lifespan'
+________________________ test_detailed_health_endpoint ________________________
+tests\system\test_api_health_endpoints.py:31: in test_detailed_health_endpoint
+    transport = ASGITransport(app=app, lifespan="off")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: ASGITransport.__init__() got an unexpected keyword argument 'lifespan'
+________________________ test_database_status_endpoint ________________________
+tests\system\test_api_health_endpoints.py:47: in test_database_status_endpoint
+    transport = ASGITransport(app=app, lifespan="off")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: ASGITransport.__init__() got an unexpected keyword argument 'lifespan'
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.5-final-0 _______________
+
+Name                                    Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------
+agent\__init__.py                           1      0   100%
+agent\agent.py                             67     32    52%   62-64, 71-74, 79-82, 87-90, 95-108, 113-116, 121-123, 128-130, 135
+agent\api.py                              353    256    27%   89, 96-145, 212-214, 220, 227-243, 266-274, 293-355, 376-393, 421-475, 482-511, 517-521, 527-530, 539-550, 556-577, 583-693, 700-721, 728-748, 755-776, 785-798, 804-815, 822-824
+agent\cache_manager.py                    147    103    30%   39-55, 59-62, 67-75, 84-96, 100-113, 117-126, 130-143, 154-156, 165-167, 177-178, 186-187, 200-207, 218-225, 235-236, 244-245, 255-256, 264-265, 269-270, 275-296, 305, 310
+agent\db_utils.py                         181    136    25%   32, 44-59, 62-65, 70-74, 79-81, 86-103, 107-111, 115-118, 128-156, 173, 178, 189-204, 209-227, 232-242, 253-265, 273-285, 293-321, 332-355, 366-393, 411-430, 438-459, 465-467, 472-478, 483
+agent\graph_utils.py                      149    109    27%   43, 49-92, 95-116, 120-140, 144-149, 157-175, 179-236, 246, 249-250, 254-264, 267, 270, 274-282
+agent\models.py                           165      8    95%   76, 155-157, 220-223
+agent\monitoring.py                       196    124    37%   238-260, 270-287, 301-318, 329-346, 357-404, 409-438, 449-473, 496-554, 559-566, 571-583, 592
+agent\prompts.py                            1      0   100%
+agent\providers.py                         40     16    60%   67-73, 79, 84, 94-110, 120
+agent\tools.py                            146     99    32%   43-66, 102-132, 136-162, 166-200, 204-212, 216-225, 229-238, 242-252, 263-289
+ingestion\__init__.py                       1      1     0%   3
+ingestion\chunker.py                      147    147     0%   5-203
+ingestion\docx_processor.py               129    129     0%   5-248
+ingestion\embedder.py                     192    192     0%   5-434
+ingestion\graph_builder.py                 74     74     0%   5-145
+ingestion\incremental_manager.py          286    286     0%   6-632
+ingestion\ingest.py                       147    147     0%   5-260
+ingestion\optimized_pipeline.py            90     90     0%   5-226
+ingestion\section_recovery_manager.py      78     78     0%   6-270
+ingestion\streaming_docx_processor.py     115    115     0%   6-272
+---------------------------------------------------------------------
+TOTAL                                    2705   2142    21%
+Coverage HTML written to dir htmlcov
+=========================== short test summary info ===========================
+FAILED tests/system/test_api_health_endpoints.py::test_health_endpoint_ok - TypeError: ASGITransport.__init__() got an unexpected keyword argument 'lifespan'
+FAILED tests/system/test_api_health_endpoints.py::test_detailed_health_endpoint - TypeError: ASGITransport.__init__() got an unexpected keyword argument 'lifespan'
+FAILED tests/system/test_api_health_endpoints.py::test_database_status_endpoint - TypeError: ASGITransport.__init__() got an unexpected keyword argument 'lifespan'
+============================== 3 failed in 6.73s ==============================

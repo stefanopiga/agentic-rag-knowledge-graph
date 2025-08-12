@@ -14,10 +14,10 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://rag_user:rag_password@postgres:5432/rag_db
+      DATABASE_URL: ${DATABASE_URL:-postgresql://rag_user:rag_password@postgres:5432/rag_db}
       OPENAI_API_KEY: ${LLM_API_KEY}
-      NEO4J_URI: bolt://neo4j:7687
-      REDIS_URL: redis://redis:6379/0
+      NEO4J_URI: ${NEO4J_URI:-bolt://neo4j:7687}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     command: uv run uvicorn agent.api:app --host 0.0.0.0 --port 8000 --proxy-headers
 
   postgres:
@@ -27,7 +27,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-rag_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag_password}
     ports:
-      - "5432:5432"
+      - "55432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/schema_with_auth.sql:/docker-entrypoint-initdb.d/init.sql

@@ -1,6 +1,5 @@
 import { apiClient } from "./api";
-import { useAuthStore } from "@/stores/authStore";
-import { useChatStore } from "@/stores/chatStore";
+// import { useAuthStore } from "@/stores/authStore"; // non usato direttamente qui
 
 interface ChatStreamRequest {
   message: string;
@@ -30,7 +29,7 @@ export const startChatStream = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${useAuthStore.getState().token ?? ""}`,
+      // Authorization header viene gestito da apiClient se necessario a livello globale
     },
     body: JSON.stringify(payload),
     signal: controller.signal,

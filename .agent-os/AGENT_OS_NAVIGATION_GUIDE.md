@@ -76,6 +76,24 @@ MIGRATION_GUIDE.md
 
 ---
 
+### 🧱 **STEP 3.5: Infrastruttura, Database & Monitoring (NUOVO)**
+
+```
+.agent-os/instructions/project/INFRASTRUCTURE_DB_MONITORING.md
+```
+
+**Contenuto NUOVO**:
+
+- Ruolo cartelle: `monitoring`, `load_testing`, `security`, `pg-vector`, `htmlcov`
+- Architettura DB: compose locale vs Neon, multi-tenant su singolo DB
+- Variabili chiave: `DATABASE_URL`, `DISABLE_DB_PERSISTENCE`, `ENABLE_METRICS`, `.env` vs `env.txt`
+- Modalità ingestion offline: prerequisiti minimi `.env`, uso `skip_graph_building`, test post‑ingestione solo Postgres
+- Procedure: deploy schema su Neon, avvio stack monitoring, E2E check Windows
+
+**Perché importante**: Fonte unificata per scelte infrastrutturali, debugging e configurazione ambienti.
+
+---
+
 ### 🎨 **STEP 4: Frontend Architecture**
 
 ```
@@ -129,7 +147,7 @@ MIGRATION_GUIDE.md
 | **Frontend**    | `UI_FRONTEND_SPECIFICATION.md`        | ✅ FUNZIONANTE | localhost:3000      |
 | **Backend API** | `project-status.md`                   | ❌ ISSUES      | Redis connection    |
 | **Databases**   | `MEDICAL_RAG_SYSTEM_SPECIFICATION.md` | ⚠️ PARZIALE    | PostgreSQL+Neo4j OK |
-| **Integration** | `ROADMAP.md`                          | ⏳ PENDING     | Blocked by backend  |
+| **Integration** | `roadmap.md`                          | ⏳ PENDING     | Blocked by backend  |
 
 ---
 

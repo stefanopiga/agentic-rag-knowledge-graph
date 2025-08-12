@@ -57,6 +57,7 @@ class DocumentScanResult:
 class IngestionStatusRecord:
     """Database record for ingestion status."""
     id: int
+    tenant_id: UUID
     file_path: str
     file_hash: str
     file_size: int
@@ -73,6 +74,8 @@ class IngestionStatusRecord:
     ingestion_completed_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+    error_message: Optional[str] = None
+    error_details: Optional[str] = None
 
 
 class IncrementalIngestionManager:
@@ -167,8 +170,12 @@ class IncrementalIngestionManager:
         for pattern in patterns:
             import glob
             found_files = glob.glob(os.path.join(base_path, "**", pattern), recursive=True)
-            # Filter out temporary files (starting with ~$)
-            found_files = [f for f in found_files if not os.path.basename(f).startswith('~$')]
+            # Filter out temporary files and README.md in any folder
+            found_files = [
+                f for f in found_files
+                if not os.path.basename(f).startswith('~$')
+                and os.path.basename(f).lower() != 'readme.md'
+            ]
             files.extend(found_files)
         
         return sorted(files)

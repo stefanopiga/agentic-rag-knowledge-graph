@@ -65,7 +65,15 @@ from .tools import (
 from uuid import UUID
 
 # Load environment variables
+# 1) Load base .env (does not override already-set env vars)
 load_dotenv()
+# 2) If running in production, optionally load .env.production (without overriding process env)
+if os.getenv("APP_ENV", "development").lower() == "production":
+    try:
+        load_dotenv(".env.production", override=False)
+    except Exception:
+        # Non-blocking: proceed even if file not present
+        pass
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +85,12 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 ENABLE_METRICS = os.getenv("ENABLE_METRICS", "true").lower() == "true"
 METRICS_PORT = int(os.getenv("METRICS_PORT", 9090))
 DISABLE_DB_PERSISTENCE = os.getenv("DISABLE_DB_PERSISTENCE", "false").lower() == "true"
+"""
+Production CORS configuration
+ - CORS_ALLOWED_ORIGINS: comma-separated list of origins (e.g. "https://app.example.com,https://www.example.com")
+   If not set, defaults to "*" in non-production, and empty in production (which implies deny-all unless explicitly set)
+"""
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "" if APP_ENV == "production" else "*")
 
 # Configure logging
 logging.basicConfig(
@@ -129,7 +143,10 @@ async def lifespan(app: FastAPI):
         
     except Exception as e:
         logger.error(f"Startup failed: {e}")
-        raise
+        # In non-production environments, continue startup to allow health endpoints/tests to run
+        if APP_ENV.lower() == "production":
+            raise
+        logger.warning("Continuing startup despite initialization errors (non-production environment)")
     
     yield
     
@@ -153,13 +170,22 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add middleware with flexible CORS
+def _parse_allowed_origins(origins_str: str) -> list[str]:
+    if not origins_str:
+        return []
+    if origins_str.strip() == "*":
+        return ["*"]
+    return [o.strip() for o in origins_str.split(",") if o.strip()]
+
+
+# Add middleware with flexible, env-driven CORS
+_allowed_origins = _parse_allowed_origins(CORS_ALLOWED_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins if _allowed_origins else ([] if APP_ENV == "production" else ["*"] ),
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -422,7 +448,7 @@ async def execute_agent(
         # Create dependencies
         deps = AgentDependencies(
             session_id=session_id,
-            tenant_id=request.tenant_id,
+            tenant_id=tenant_id,
             user_id=user_id
         )
         

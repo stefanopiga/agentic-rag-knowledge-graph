@@ -21,7 +21,7 @@ from agent.graph_utils import graph_client
 
 logger = logging.getLogger(__name__)
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 async def default_tenant_id() -> UUID:
     """Ensure a default tenant exists and return its ID."""
     async with db_pool.acquire() as conn:
@@ -72,7 +72,8 @@ class TestChunkingStrategies:
     async def test_fixed_size_chunking(self, sample_content):
         config = ChunkingConfig(chunk_size=50, chunk_overlap=10, use_semantic_splitting=False)
         chunker = create_chunker(config)
-        chunks = await chunker.chunk_document(content=sample_content, title="Test", source="test.md")
+        # Simple strategy: chunk_document sincrono
+        chunks = chunker.chunk_document(content=sample_content, title="Test", source="test.md")
         assert len(chunks) > 1
 
 class TestFullPipeline:

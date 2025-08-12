@@ -9,6 +9,10 @@ import sys
 import tempfile
 from typing import Generator, Dict, Any
 from unittest.mock import Mock, AsyncMock, patch
+from dotenv import load_dotenv
+
+# Load .env first so real credentials are available to the process
+load_dotenv()
 
 # Set test environment
 os.environ.setdefault("APP_ENV", "test")
@@ -18,6 +22,19 @@ os.environ.setdefault("APP_ENV", "test")
 # It ensures that the correct event loop policy is set before any async operations begin.
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+os.environ.setdefault("EMBEDDINGS_OFFLINE", "1")
+os.environ.setdefault("LLM_API_KEY", "dummy_key_for_tests")
+os.environ.setdefault("EMBEDDING_API_KEY", "dummy_key_for_tests")
+os.environ.setdefault("NEO4J_URI", "bolt://localhost:7687")
+os.environ.setdefault("NEO4J_USER", "neo4j")
+os.environ.setdefault("NEO4J_PASSWORD", "password")
+os.environ.setdefault("DATABASE_URL", "postgresql://rag_user:rag_password@localhost:55432/rag_db")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+
+os.environ.setdefault("EMBEDDINGS_OFFLINE", "1")
+os.environ.setdefault("LLM_API_KEY", os.environ.get("LLM_API_KEY", "sk-test"))
+os.environ.setdefault("EMBEDDING_API_KEY", os.environ.get("EMBEDDING_API_KEY", "sk-test"))
 
 from agent.graph_utils import GraphitiClient
 from agent.db_utils import db_pool

@@ -11,8 +11,11 @@ from pathlib import Path
 import asyncpg
 from dotenv import load_dotenv
 
-# Carica le variabili d'ambiente prima di ogni altra cosa
-load_dotenv()
+# Carica le variabili d'ambiente prima di ogni altra cosa (forza override da .env)
+load_dotenv(override=True)
+# Allinea credenziali Neo4j per i test (priorità a .env)
+if os.getenv("NEO4J_PASSWORD"):
+    os.environ["NEO4J_PASSWORD"] = os.getenv("NEO4J_PASSWORD")
 # Modalità offline per embeddings durante i test
 os.environ.setdefault("EMBEDDINGS_OFFLINE", "1")
 
@@ -33,6 +36,7 @@ logging.basicConfig(level=logging.WARNING, format="%(asctime)s - %(name)s - %(le
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+
 @pytest.fixture(scope="function")
 def event_loop():
     """Crea un loop di eventi per ogni test (evita ScopeMismatch con pytest-asyncio)."""
@@ -51,6 +55,22 @@ async def manage_database_connections(event_loop):
     """
     # Inizializza le connessioni
     await initialize_database()
+    # Forza re-instanziazione del client Neo4j con le credenziali correnti da .env
+    try:
+        import agent.graph_utils as gg
+        gg.graph_client = gg.GraphitiClient(
+            neo4j_uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+            neo4j_user=os.getenv("NEO4J_USER", "neo4j"),
+            neo4j_password=os.getenv("NEO4J_PASSWORD")
+        )
+        # Aggiorna anche il riferimento importato nei test già caricati
+        try:
+            import tests.comprehensive.test_database_connections as tdc
+            tdc.graph_client = gg.graph_client
+        except Exception:
+            pass
+    except Exception:
+        pass
     await initialize_graph()
     
     # Esegui lo schema SQL per assicurarti che il database sia pulito e pronto
@@ -69,6 +89,8 @@ async def manage_database_connections(event_loop):
     # Chiudi le connessioni alla fine del test
     await close_graph()
     await close_database()
+
+
 
 @pytest.fixture
 def test_db_session():

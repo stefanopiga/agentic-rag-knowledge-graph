@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-08-12T15:42:48.308398",
+  "database_url": "localhost:55432/rag_db",
+  "tests": {
+    "extensions": {
+      "passed": true,
+      "details": "Tutte le extensions presenti: pg_trgm, uuid-ossp, btree_gin, vector",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.385283"
+    },
+    "tables": {
+      "passed": true,
+      "details": "Tutte le tabelle presenti (19 totali)",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.391785"
+    },
+    "functions": {
+      "passed": true,
+      "details": "Tutte le funzioni presenti: hybrid_search, update_updated_at_column, get_document_chunks, match_chunks",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.399654"
+    },
+    "indexes": {
+      "passed": true,
+      "details": "Indexes critici presenti (31 totali)",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.417902"
+    },
+    "vector_index": {
+      "passed": true,
+      "details": "Vector index trovato: idx_chunks_embedding",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.417941"
+    },
+    "rls_enabled": {
+      "passed": true,
+      "details": "RLS abilitato su 15 tabelle",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.422840"
+    },
+    "default_tenant": {
+      "passed": true,
+      "details": "Tenant trovati: 1",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.425188"
+    },
+    "admin_users": {
+      "passed": false,
+      "details": "Nessun admin user trovato",
+      "warning": true,
+      "timestamp": "2025-08-12T15:42:48.427531"
+    },
+    "medical_categories": {
+      "passed": true,
+      "details": "Categorie mediche: 8",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.429975"
+    },
+    "match_chunks_function": {
+      "passed": true,
+      "details": "Funzione match_chunks operativa",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.438938"
+    },
+    "hybrid_search_function": {
+      "passed": true,
+      "details": "Funzione hybrid_search operativa",
+      "warning": false,
+      "timestamp": "2025-08-12T15:42:48.444506"
+    }
+  },
+  "summary": {
+    "total_tests": 11,
+    "passed": 10,
+    "failed": 0,
+    "warnings": 1
+  }
+}

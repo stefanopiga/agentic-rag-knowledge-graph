@@ -19,6 +19,7 @@ from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
 from graphiti_core.cross_encoder.openai_reranker_client import OpenAIRerankerClient
 from dotenv import load_dotenv
 
+# Load .env without overriding process env (so per-command set vars win)
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,12 @@ class GraphitiClient:
     """Manages Graphiti knowledge graph operations with multi-tenancy."""
     
     def __init__(self, neo4j_uri: Optional[str] = None, neo4j_user: Optional[str] = None, neo4j_password: Optional[str] = None):
-        self.neo4j_uri = neo4j_uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        # Prefer NEO4J_URI_HOST for esecuzioni su host; fallback a NEO4J_URI
+        self.neo4j_uri = (
+            neo4j_uri
+            or os.getenv("NEO4J_URI_HOST")
+            or os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        )
         self.neo4j_user = neo4j_user or os.getenv("NEO4J_USER", "neo4j")
         self.neo4j_password = neo4j_password or os.getenv("NEO4J_PASSWORD")
         self.llm_api_key = os.getenv("LLM_API_KEY")
@@ -48,8 +54,26 @@ class GraphitiClient:
             llm_client = OpenAIClient(config=llm_config)
             embedder = OpenAIEmbedder(config=OpenAIEmbedderConfig(api_key=self.embedding_api_key, embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"), embedding_dim=int(os.getenv("VECTOR_DIMENSION", "1536")), base_url=os.getenv("EMBEDDING_BASE_URL")))
             
-            self.graphiti = Graphiti(self.neo4j_uri, self.neo4j_user, self.neo4j_password, llm_client=llm_client, embedder=embedder)
-            await self.graphiti.build_indices_and_constraints()
+            # Try primary URI; on DNS failure fallback to localhost
+            candidate_uris = [self.neo4j_uri]
+            if "neo4j:" in self.neo4j_uri or "//neo4j:" in self.neo4j_uri:
+                candidate_uris.append("bolt://localhost:7687")
+                candidate_uris.append("bolt://127.0.0.1:7687")
+
+            last_err: Optional[Exception] = None
+            for uri in candidate_uris:
+                try:
+                    self.graphiti = Graphiti(uri, self.neo4j_user, self.neo4j_password, llm_client=llm_client, embedder=embedder)
+                    await self.graphiti.build_indices_and_constraints()
+                    self.neo4j_uri = uri
+                    last_err = None
+                    break
+                except Exception as e:
+                    logger.error(f"Error initializing Graphiti with URI {uri}: {e}")
+                    last_err = e
+
+            if last_err is not None:
+                raise last_err
             # Add constraint for tenant_id on Episode nodes
             # Neo4j Community Edition does not support property existence constraints.
             # Use an index instead, compatible with Community and sufficient for filtering.
@@ -149,6 +173,72 @@ class GraphitiClient:
             entity_name=entity_name
         )
         return [dict(record) for record in results[0]]
+
+    async def health_check(self) -> Dict[str, Any]:
+        """Basic health check for Neo4j/Graphiti and tenant index presence."""
+        if not self._initialized:
+            await self.initialize()
+        try:
+            # Connectivity check
+            records, summary, _ = await self.graphiti.driver.execute_query("RETURN 1 AS ok")
+            connected = False
+            if records:
+                try:
+                    rec_map = dict(records[0])
+                except Exception:
+                    # Fallback: access by key if dict conversion fails
+                    rec_map = {"ok": records[0]["ok"]} if "ok" in records[0].keys() else {}
+                ok_val = rec_map.get("ok")
+                connected = ok_val == 1 or ok_val is True
+
+            # Index existence check for Episode(tenant_id)
+            tenant_index_exists = False
+            try:
+                idx_query = (
+                    "CALL db.indexes() YIELD labelsOrTypes, properties "
+                    "WITH labelsOrTypes, properties "
+                    "WHERE 'Episode' IN labelsOrTypes AND 'tenant_id' IN properties "
+                    "RETURN count(*) > 0 AS exists"
+                )
+                idx_records, _, _ = await self.graphiti.driver.execute_query(idx_query)
+                if idx_records:
+                    try:
+                        idx_map = dict(idx_records[0])
+                    except Exception:
+                        idx_map = {"exists": idx_records[0]["exists"]} if "exists" in idx_records[0].keys() else {}
+                    tenant_index_exists = bool(idx_map.get("exists"))
+            except Exception:
+                # Fallback: SHOW INDEXES syntax (Neo4j 5)
+                try:
+                    alt_query = (
+                        "SHOW INDEXES YIELD labelsOrTypes, properties "
+                        "WITH labelsOrTypes, properties "
+                        "WHERE 'Episode' IN labelsOrTypes AND 'tenant_id' IN properties "
+                        "RETURN count(*) > 0 AS exists"
+                    )
+                    idx_records, _, _ = await self.graphiti.driver.execute_query(alt_query)
+                    if idx_records:
+                        try:
+                            idx_map = dict(idx_records[0])
+                        except Exception:
+                            idx_map = {"exists": idx_records[0]["exists"]} if "exists" in idx_records[0].keys() else {}
+                        tenant_index_exists = bool(idx_map.get("exists"))
+                except Exception:
+                    tenant_index_exists = False
+
+            return {
+                "connected": connected,
+                "tenant_index_exists": tenant_index_exists,
+                "uri": self.neo4j_uri,
+            }
+        except Exception as e:
+            logger.error(f"Graph health check failed: {e}")
+            return {
+                "connected": False,
+                "tenant_index_exists": False,
+                "uri": self.neo4j_uri,
+                "error": str(e),
+            }
 
 graph_client = GraphitiClient()
 

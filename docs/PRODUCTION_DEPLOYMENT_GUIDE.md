@@ -130,7 +130,7 @@ ALLOWED_HOSTS=fisiorag.example.com,app.fisiorag.com
 
 # === MONITORING ===
 SENTRY_DSN=https://your_sentry_dsn@sentry.io/project
-PROMETHEUS_ENABLED=true
+ENABLE_METRICS=true
 METRICS_PORT=9090
 
 # === BACKUP ===
@@ -141,18 +141,21 @@ BACKUP_ENCRYPTION_KEY=your_backup_encryption_key
 ### Environment Templates
 
 #### Development
+
 ```bash
 cp env.txt .env.development
 # Edit with development values
 ```
 
 #### Staging
+
 ```bash
 cp env.txt .env.staging
 # Edit with staging values
 ```
 
 #### Production
+
 ```bash
 cp env.txt .env.production
 # Edit with production values and secure secrets
@@ -162,9 +165,56 @@ cp env.txt .env.production
 
 ## 🐳 Docker Deployment
 
+### Avvio locale (Windows, UV + PNPM)
+
+Seguenza raccomandata per eseguire l'intero stack in locale.
+
+1. Avvio servizi (PostgreSQL, Redis, Neo4j)
+
+```cmd
+docker compose up -d
+docker compose ps
+```
+
+2. Backend (FastAPI)
+
+```cmd
+uv run fisiorag-serve
+:: oppure
+uv run python -m agent.api
+```
+
+3. Frontend (Vite)
+
+```cmd
+pnpm -C frontend install --frozen-lockfile
+pnpm -C frontend run dev
+```
+
+4. Ingestione documenti (incrementale; README.md è escluso automaticamente)
+
+```cmd
+uv run python -m ingestion.ingest --documents-dir documents --tenant-slug default
+```
+
+Nota Neo4j (Community vs Enterprise)
+
+- Con Neo4j Community, i "property existence constraints" non sono supportati. Per evitare errori nel builder del grafo in locale:
+
+```cmd
+uv run python -c "import asyncio; from ingestion.ingest import DocumentIngestionPipeline; from agent.models import IngestionConfig; async def main(): p=DocumentIngestionPipeline(config=IngestionConfig(skip_graph_building=True), documents_folder='documents'); await p.ingest_documents(tenant_slug='default'); await p.close();\nasyncio.run(main())"
+```
+
+5. Test end‑to‑end (opzionale)
+
+```cmd
+uv run pytest -q
+```
+
 ### Production Docker Build
 
 Il Dockerfile è ottimizzato per produzione con:
+
 - **Multi-stage build** per ridurre dimensioni (70% più piccolo)
 - **UV package manager** (10-100x più veloce di pip)
 - **Health checks** integrati
@@ -185,7 +235,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t fisiorag:latest .
 
 #### Production Docker Compose
 
-Crea `docker-compose.prod.yml`:
+Crea `docker-compose.prod.yml`:  # file name invariato, comandi con `docker compose`
 
 ```yaml
 version: "3.8"
@@ -209,10 +259,10 @@ services:
       resources:
         limits:
           memory: 2G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -249,7 +299,7 @@ services:
       resources:
         limits:
           memory: 4G
-          cpus: '2.0'
+          cpus: "2.0"
 
   neo4j:
     image: neo4j:5.15-enterprise
@@ -267,7 +317,7 @@ services:
       resources:
         limits:
           memory: 3G
-          cpus: '1.5'
+          cpus: "1.5"
 
   redis:
     image: redis:7-alpine
@@ -279,7 +329,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '0.5'
+          cpus: "0.5"
 
   nginx:
     image: nginx:alpine
@@ -313,16 +363,16 @@ volumes:
 
 ```bash
 # Deploy produzione
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 # Verificare status
-docker-compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 
 # Logs monitoring
-docker-compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.prod.yml logs -f
 
 # Scale services
-docker-compose -f docker-compose.prod.yml up -d --scale app=3
+docker compose -f docker-compose.prod.yml up -d --scale app=3
 ```
 
 ---
@@ -351,8 +401,8 @@ name: Production Deployment
 
 on:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+    branches: [main]
+    tags: ["v*"]
 
 env:
   REGISTRY: ghcr.io
@@ -362,7 +412,7 @@ jobs:
   deploy-production:
     runs-on: ubuntu-latest
     environment: production
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -396,8 +446,8 @@ jobs:
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
             cd /opt/fisiorag
-            docker-compose -f docker-compose.prod.yml pull
-            docker-compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
             docker system prune -f
 
       - name: Health Check
@@ -551,11 +601,13 @@ save 60 10000
 
 ### Application Monitoring
 
+Nota: impostare `ENABLE_METRICS=true` per esporre l'endpoint Prometheus su `/metrics` (FastAPI).
+
 #### Prometheus + Grafana Setup
 
 ```yaml
-# monitoring/docker-compose.yml
-version: '3.8'
+# monitoring/docker-compose.yml  # nome file invariato; usare `docker compose -f monitoring/docker-compose.monitoring.yml`
+version: "3.8"
 
 services:
   prometheus:
@@ -637,7 +689,7 @@ def setup_production_logging():
 
 ```yaml
 # monitoring/elk-stack.yml
-version: '3.8'
+version: "3.8"
 
 services:
   elasticsearch:
@@ -683,7 +735,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "services": {}
     }
-    
+
     # PostgreSQL check
     try:
         conn = await asyncpg.connect(DATABASE_URL)
@@ -693,7 +745,7 @@ async def health_check():
     except Exception as e:
         checks["services"]["postgresql"] = f"unhealthy: {str(e)}"
         checks["status"] = "unhealthy"
-    
+
     # Neo4j check
     try:
         from neo4j import GraphDatabase
@@ -705,7 +757,7 @@ async def health_check():
     except Exception as e:
         checks["services"]["neo4j"] = f"unhealthy: {str(e)}"
         checks["status"] = "unhealthy"
-    
+
     # Redis check
     try:
         r = redis.from_url(REDIS_URL)
@@ -714,7 +766,7 @@ async def health_check():
     except Exception as e:
         checks["services"]["redis"] = f"unhealthy: {str(e)}"
         checks["status"] = "unhealthy"
-    
+
     return checks
 ```
 
@@ -740,15 +792,15 @@ server {
 
     ssl_certificate /etc/nginx/ssl/fisiorag.crt;
     ssl_certificate_key /etc/nginx/ssl/fisiorag.key;
-    
+
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256;
     ssl_prefer_server_ciphers off;
-    
+
     add_header Strict-Transport-Security "max-age=63072000" always;
     add_header X-Frame-Options DENY;
     add_header X-Content-Type-Options nosniff;
-    
+
     location / {
         proxy_pass http://app:8000;
         proxy_set_header Host $host;
@@ -818,12 +870,12 @@ import bleach
 class QueryRequest(BaseModel):
     query: str
     tenant_id: str
-    
+
     @validator('query')
     def sanitize_query(cls, v):
         # Remove potentially dangerous HTML/script content
         return bleach.clean(v, strip=True)
-    
+
     @validator('tenant_id')
     def validate_tenant(cls, v):
         if not re.match(r'^[a-zA-Z0-9_-]+$', v):
@@ -848,16 +900,16 @@ class ProductionSettings(BaseSettings):
     max_requests: int = 1000
     max_requests_jitter: int = 100
     preload_app: bool = True
-    
+
     # Connection pooling
     db_pool_size: int = 20
     db_max_overflow: int = 30
     db_pool_timeout: int = 30
-    
+
     # Cache settings
     redis_pool_size: int = 10
     cache_ttl: int = 3600
-    
+
     # AI processing
     batch_size: int = 10
     max_concurrent_requests: int = 50
@@ -884,11 +936,11 @@ async def create_db_pool():
 # Query optimization
 async def get_similar_documents(query_vector: List[float], limit: int = 10):
     query = """
-    SELECT id, content, metadata, 
+    SELECT id, content, metadata,
            embedding <-> $1 as distance
-    FROM documents 
+    FROM documents
     WHERE tenant_id = $2
-    ORDER BY embedding <-> $1 
+    ORDER BY embedding <-> $1
     LIMIT $3
     """
     # Use prepared statements for better performance
@@ -900,17 +952,17 @@ async def get_similar_documents(query_vector: List[float], limit: int = 10):
 #### Container Resource Limits
 
 ```yaml
-# docker-compose.prod.yml resource optimization
+# docker-compose.prod.yml resource optimization  # usare comandi `docker compose`
 services:
   app:
     deploy:
       resources:
         limits:
           memory: 4G
-          cpus: '2.0'
+          cpus: "2.0"
         reservations:
           memory: 2G
-          cpus: '1.0'
+          cpus: "1.0"
     ulimits:
       nofile:
         soft: 65536
@@ -930,7 +982,7 @@ http {
     tcp_nodelay on;
     keepalive_timeout 65;
     types_hash_max_size 2048;
-    
+
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
@@ -988,24 +1040,24 @@ from datetime import datetime, timedelta
 def verify_daily_backups():
     s3 = boto3.client('s3')
     bucket = 'fisiorag-backups'
-    
+
     yesterday = datetime.now() - timedelta(days=1)
     prefix = yesterday.strftime('%Y/%m/%d/')
-    
+
     response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-    
+
     if 'Contents' not in response:
         send_alert("No backups found for yesterday!")
         return False
-    
+
     required_backups = ['postgres_', 'neo4j_', 'redis_']
     found_backups = [obj['Key'] for obj in response['Contents']]
-    
+
     for backup_type in required_backups:
         if not any(backup_type in key for key in found_backups):
             send_alert(f"Missing {backup_type} backup for yesterday!")
             return False
-    
+
     return True
 ```
 
@@ -1040,7 +1092,7 @@ docker run --rm -v redis_data:/data -v $BACKUP_DIR:/backups \
     redis:7-alpine cp /backups/redis_*.rdb /data/dump.rdb
 
 # Start services
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 echo "Recovery completed. Verifying services..."
 sleep 30
@@ -1056,11 +1108,13 @@ curl -f https://api.fisiorag.com/health || echo "Health check failed!"
 #### 1. Database Connection Issues
 
 **Symptoms**:
+
 - `connection refused` errors
 - Timeout on database queries
 - Health check failures
 
 **Solutions**:
+
 ```bash
 # Check database connectivity
 nc -zv database.host 5432
@@ -1078,11 +1132,13 @@ docker-compose restart postgres
 #### 2. Memory Issues
 
 **Symptoms**:
+
 - OOMKilled containers
 - Slow response times
 - High memory usage
 
 **Solutions**:
+
 ```bash
 # Monitor memory usage
 docker stats
@@ -1103,11 +1159,13 @@ docker-compose.prod.yml:
 #### 3. SSL Certificate Issues
 
 **Symptoms**:
+
 - Browser security warnings
 - SSL handshake failures
 - HTTPS redirects not working
 
 **Solutions**:
+
 ```bash
 # Check certificate validity
 openssl x509 -in /etc/nginx/ssl/fisiorag.crt -text -noout
@@ -1131,9 +1189,9 @@ ORDER BY mean_exec_time DESC
 LIMIT 10;
 
 -- Check vector index usage
-EXPLAIN (ANALYZE, BUFFERS) 
-SELECT * FROM documents 
-ORDER BY embedding <-> '[1,2,3...]'::vector 
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM documents
+ORDER BY embedding <-> '[1,2,3...]'::vector
 LIMIT 10;
 ```
 
@@ -1144,7 +1202,7 @@ LIMIT 10;
 CALL dbms.queryJmx("org.neo4j:instance=kernel#0,name=Page Cache")
 
 // Analyze slow queries
-CALL dbms.procedures() YIELD name 
+CALL dbms.procedures() YIELD name
 WHERE name CONTAINS "slow"
 
 // Index optimization
@@ -1170,13 +1228,13 @@ docker-compose logs app | grep "query_duration" | tail -20
 
 ```bash
 # PostgreSQL logs
-docker-compose exec postgres tail -f /var/log/postgresql/postgresql.log
+docker compose exec postgres tail -f /var/log/postgresql/postgresql.log
 
 # Neo4j logs
-docker-compose exec neo4j tail -f /logs/debug.log
+docker compose exec neo4j tail -f /logs/debug.log
 
 # Redis logs
-docker-compose exec redis redis-cli monitor
+docker compose exec redis redis-cli monitor
 ```
 
 ---
@@ -1186,18 +1244,21 @@ docker-compose exec redis redis-cli monitor
 ### Maintenance Schedule
 
 #### Daily Tasks
+
 - ✅ Check service health status
 - ✅ Monitor error rates and performance metrics
 - ✅ Verify backup completion
 - ✅ Review security alerts
 
 #### Weekly Tasks
+
 - 🔄 Update dependencies (automated via Dependabot)
 - 🔄 Rotate log files
 - 🔄 Database maintenance (VACUUM, ANALYZE)
 - 🔄 Performance review
 
 #### Monthly Tasks
+
 - 🔐 Review access logs and user activity
 - 📊 Capacity planning analysis
 - 🔄 Security patch review
@@ -1220,11 +1281,11 @@ docker-compose exec redis redis-cli monitor
 oncall:
   primary: "admin@fisiorag.com"
   secondary: "devops@fisiorag.com"
-  
+
 monitoring:
   slack: "#fisiorag-alerts"
   pagerduty: "fisiorag-production"
-  
+
 vendors:
   database: "database-support@provider.com"
   cloud: "cloud-support@provider.com"

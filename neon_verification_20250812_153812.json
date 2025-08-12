@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-08-12T15:38:12.292141",
+  "database_url": "localhost:55432/rag_db",
+  "tests": {
+    "extensions": {
+      "passed": true,
+      "details": "Tutte le extensions presenti: btree_gin, uuid-ossp, pg_trgm, vector",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.329259"
+    },
+    "tables": {
+      "passed": true,
+      "details": "Tutte le tabelle presenti (19 totali)",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.334118"
+    },
+    "functions": {
+      "passed": true,
+      "details": "Tutte le funzioni presenti: match_chunks, get_document_chunks, update_updated_at_column, hybrid_search",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.338176"
+    },
+    "indexes": {
+      "passed": true,
+      "details": "Indexes critici presenti (31 totali)",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.347754"
+    },
+    "vector_index": {
+      "passed": true,
+      "details": "Vector index trovato: idx_chunks_embedding",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.347828"
+    },
+    "rls_enabled": {
+      "passed": true,
+      "details": "RLS abilitato su 15 tabelle",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.350277"
+    },
+    "default_tenant": {
+      "passed": true,
+      "details": "Tenant trovati: 1",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.351661"
+    },
+    "admin_users": {
+      "passed": false,
+      "details": "Nessun admin user trovato",
+      "warning": true,
+      "timestamp": "2025-08-12T15:38:12.353365"
+    },
+    "medical_categories": {
+      "passed": true,
+      "details": "Categorie mediche: 8",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.354755"
+    },
+    "match_chunks_function": {
+      "passed": false,
+      "details": "Errore match_chunks: Query failed: different vector dimensions 1536 and 3\nCONTEXT:  SQL statement \"SELECT \n        c.id AS chunk_id,\n        c.document_id,\n        c.content,\n        1 - (c.embedding <=> query_embedding) AS similarity,\n        c.metadata,\n        d.title AS document_title,\n        d.source AS document_source,\n        c.category,\n        c.document_order\n    FROM chunks c\n    JOIN documents d ON c.document_id = d.id\n    WHERE c.tenant_id = p_tenant_id \n      AND d.tenant_id = p_tenant_id\n      AND c.embedding IS NOT NULL\n    ORDER BY c.embedding <=> query_embedding\n    LIMIT match_count\"\nPL/pgSQL function match_chunks(uuid,vector,integer) line 3 at RETURN QUERY\n",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.360091"
+    },
+    "hybrid_search_function": {
+      "passed": false,
+      "details": "Errore hybrid_search: Query failed: structure of query does not match function result type\nDETAIL:  Returned type real does not match expected type double precision in column 6.\nCONTEXT:  SQL statement \"WITH vector_results AS (\n        SELECT \n            c.id AS chunk_id,\n            c.document_id,\n            c.content,\n            1 - (c.embedding <=> query_embedding) AS vector_sim,\n            c.metadata,\n            d.title AS doc_title,\n            d.source AS doc_source,\n            c.category,\n            c.document_order\n        FROM chunks c\n        JOIN documents d ON c.document_id = d.id\n        WHERE c.tenant_id = p_tenant_id \n          AND d.tenant_id = p_tenant_id\n          AND c.embedding IS NOT NULL\n    ),\n    text_results AS (\n        SELECT \n            c.id AS chunk_id,\n            c.document_id,\n            c.content,\n            ts_rank_cd(to_tsvector('italian', c.content), plainto_tsquery('italian', query_text)) AS text_sim,\n            c.metadata,\n            d.title AS doc_title,\n            d.source AS doc_source,\n            c.category,\n            c.document_order\n        FROM chunks c\n        JOIN documents d ON c.document_id = d.id\n        WHERE c.tenant_id = p_tenant_id \n          AND d.tenant_id = p_tenant_id\n          AND to_tsvector('italian', c.content) @@ plainto_tsquery('italian', query_text)\n    )\n    SELECT \n        COALESCE(v.chunk_id, t.chunk_id) AS chunk_id,\n        COALESCE(v.document_id, t.document_id) AS document_id,\n        COALESCE(v.content, t.content) AS content,\n        (COALESCE(v.vector_sim, 0) * (1 - text_weight) + COALESCE(t.text_sim, 0) * text_weight) AS combined_score,\n        COALESCE(v.vector_sim, 0) AS vector_similarity,\n        COALESCE(t.text_sim, 0) AS text_similarity,\n        COALESCE(v.metadata, t.metadata) AS metadata,\n        COALESCE(v.doc_title, t.doc_title) AS document_title,\n        COALESCE(v.doc_source, t.doc_source) AS document_source,\n        COALESCE(v.category, t.category) AS category,\n        COALESCE(v.document_order, t.document_order) AS document_order\n    FROM vector_results v\n    FULL OUTER JOIN text_results t ON v.chunk_id = t.chunk_id\n    ORDER BY combined_score DESC\n    LIMIT match_count\"\nPL/pgSQL function hybrid_search(uuid,vector,text,integer,double precision) line 3 at RETURN QUERY\n",
+      "warning": false,
+      "timestamp": "2025-08-12T15:38:12.366456"
+    }
+  },
+  "summary": {
+    "total_tests": 11,
+    "passed": 8,
+    "failed": 2,
+    "warnings": 1
+  }
+}

@@ -13,7 +13,7 @@ from ingestion.chunker import DocumentChunk
 
 logger = logging.getLogger(__name__)
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 async def default_tenant_id() -> UUID:
     """Ensure a default tenant exists and return its ID."""
     await db_pool.initialize()

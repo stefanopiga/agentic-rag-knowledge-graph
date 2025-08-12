@@ -14,11 +14,10 @@ rem Ricrea servizi database
 docker compose up -d --build postgres neo4j redis
 
 rem Attendi che Postgres sia pronto
-set READY=
 echo Attendo Postgres...
 :waitpg
-for /f "tokens=*" %%i in ('docker compose exec -T postgres pg_isready -U rag_user -d rag_db ^| find /i "accepting"') do set READY=1
-if not defined READY (timeout /t 2 >nul & goto waitpg)
+docker compose exec -T postgres pg_isready -U rag_user -d postgres 1>nul 2>nul
+if errorlevel 1 (timeout /t 2 >nul & goto waitpg)
 
 echo Verifico estensione pgvector...
 docker compose exec -T postgres psql -U rag_user -d rag_db -c "SELECT COUNT(*) FROM pg_extension WHERE extname = 'vector';"

@@ -9,7 +9,7 @@ from pydantic_ai.models.openai import OpenAIModel
 import openai
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables (process env takes precedence)
 load_dotenv()
 
 

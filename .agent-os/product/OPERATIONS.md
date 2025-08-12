@@ -45,9 +45,9 @@ powershell -Command "iwr -UseBasicParsing http://localhost:8000/health/detailed"
 2. Avvia UI (vite) puntata all'API:
 
 ```powershell
-$env:VITE_API_URL='http://localhost:8000'
+$env:VITE_API_BASE_URL='http://localhost:8000'
 pnpm --filter frontend dev
-# apri http://localhost:5173
+# apri http://localhost:3000
 ```
 
 3. Smoke test:

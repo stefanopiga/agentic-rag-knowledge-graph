@@ -7,3 +7,16 @@ alwaysApply: false
 Execute the next task.
 
 Refer to the instructions located in C:/Users/user/.agent-os/instructions/core/execute-tasks.md
+
+## Windows cmd notes
+
+- Evitare l'uso di pipe verso `cat` (non esiste su Windows). Rimuovere il pager o usare `type` solo per file locali.
+- Esempi:
+  - `git status -sb` (non `git status -sb | cat`)
+  - `type path\\to\\file.txt` per visualizzare un file
+  - `netstat -ano | findstr :8000` (nessun pager aggiuntivo)
+
+## Environment configuration notes
+
+- Esiste un file `.env` reale usato in runtime. Non stamparlo né modificarlo automaticamente.
+- Il file `env.txt` è una copia fedele e censurata di `.env` per consultazione. Usarlo come riferimento, per sapere come sono definite le variabili nel file .env a cui non puoi accedere.

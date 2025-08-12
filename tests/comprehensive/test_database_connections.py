@@ -58,6 +58,20 @@ class TestPostgreSQLConnections:
             assert result is not None
             assert result['extname'] == 'vector'
             await conn.execute("SELECT '[1,2,3]'::vector")
+
+    @pytest.mark.asyncio
+    async def test_required_sql_functions_exist(self):
+        """Verifica esistenza funzioni SQL richieste (match_chunks, hybrid_search)."""
+        async with db_pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT proname FROM pg_proc 
+                WHERE proname IN ('match_chunks', 'hybrid_search')
+                """
+            )
+            names = {r['proname'] for r in rows}
+            assert 'match_chunks' in names
+            assert 'hybrid_search' in names
     
     @pytest.mark.asyncio
     async def test_transaction_handling(self):

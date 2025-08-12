@@ -33,7 +33,7 @@ except (ImportError, ValueError):
     from agent.graph_utils import initialize_graph, close_graph
     from agent.models import IngestionConfig, IngestionResult
 
-load_dotenv()
+load_dotenv(override=True)
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +46,10 @@ class DocumentIngestionPipeline:
         self.clean_before_ingest = clean_before_ingest
         self.chunker = create_chunker(ChunkingConfig(chunk_size=config.chunk_size, chunk_overlap=config.chunk_overlap, use_semantic_splitting=config.use_semantic_chunking))
         self.embedder = create_embedder()
-        self.graph_builder = create_graph_builder()
+        # Crea il GraphBuilder solo se il grafo è abilitato
+        self.graph_builder = None
+        if not getattr(self.config, "skip_graph_building", False):
+            self.graph_builder = create_graph_builder()
         self.docx_processor = create_docx_processor()
         self.incremental_manager = create_incremental_manager()
         self._initialized = False
@@ -55,14 +58,15 @@ class DocumentIngestionPipeline:
         if not self._initialized:
             await initialize_database()
             # Inizializza Graph solo se richiesto dalla config
-            if not getattr(self.config, "skip_graph_building", False):
+            if not getattr(self.config, "skip_graph_building", False) and self.graph_builder is not None:
                 await self.graph_builder.initialize()
             await self.incremental_manager.initialize()
             self._initialized = True
 
     async def close(self):
         if self._initialized:
-            await self.graph_builder.close()
+            if not getattr(self.config, "skip_graph_building", False) and self.graph_builder is not None:
+                await self.graph_builder.close()
             await close_database()
             self._initialized = False
 
@@ -167,7 +171,7 @@ class DocumentIngestionPipeline:
         )
 
         graph_result = {"episodes_created": 0, "errors": []}
-        if not self.config.skip_graph_building:
+        if not self.config.skip_graph_building and self.graph_builder is not None:
             if not self.graph_builder._initialized:
                 await self.graph_builder.initialize()
             graph_result = await self.graph_builder.add_document_to_graph(
@@ -207,7 +211,13 @@ class DocumentIngestionPipeline:
             tenant = await conn.fetchrow("SELECT id FROM accounts_tenant WHERE slug = $1", slug)
             if tenant:
                 return tenant['id']
-            raise ValueError(f"Tenant with slug '{slug}' not found.")
+            # Se non esiste, crealo
+            created = await conn.fetchrow(
+                "INSERT INTO accounts_tenant (name, slug) VALUES ($1, $2) RETURNING id",
+                slug.capitalize() + " Tenant",
+                slug,
+            )
+            return created["id"]
 
     async def _save_to_postgres(self, title: str, source: str, content: str, chunks: List[DocumentChunk], metadata: Dict[str, Any], tenant_id: UUID) -> UUID:
         async with db_pool.acquire() as conn:
@@ -229,7 +239,12 @@ class DocumentIngestionPipeline:
         logger.warning("Cleaning existing data from databases...")
         async with db_pool.acquire() as conn:
             await conn.execute("TRUNCATE TABLE documents, chunks, rag_engine_chatmessage, rag_engine_chatsession RESTART IDENTITY CASCADE")
-        await self.graph_builder.clear_graph()
+        # Pulisce Neo4j solo se il grafo è abilitato nella config
+        if not getattr(self.config, "skip_graph_building", False):
+            try:
+                await self.graph_builder.clear_graph()
+            except Exception as e:
+                logger.warning(f"Skipping graph cleanup due to error: {e}")
         logger.info("Databases cleaned.")
 
 async def main():

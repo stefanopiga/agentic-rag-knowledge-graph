@@ -77,7 +77,7 @@ class DOCXProcessor:
         """Extract document title from DOCX."""
         # Try document properties first
         if hasattr(doc.core_properties, 'title') and doc.core_properties.title:
-            return doc.core_properties.title.strip()
+            return self._normalize_title(doc.core_properties.title)
         
         # Try first heading or paragraph
         for paragraph in doc.paragraphs[:5]:  # Check first 5 paragraphs
@@ -86,14 +86,33 @@ class DOCXProcessor:
                 if (hasattr(paragraph.style, 'name') and 
                     ('heading' in paragraph.style.name.lower() or 
                      'title' in paragraph.style.name.lower())):
-                    return paragraph.text.strip()
+                    return self._normalize_title(paragraph.text)
                 
                 # If short text (likely title)
                 if len(paragraph.text.strip()) < 100:
-                    return paragraph.text.strip()
+                    return self._normalize_title(paragraph.text)
         
         # Fallback to filename
-        return Path(file_path).stem.replace('_', ' ').replace('-', ' ').title()
+        return self._normalize_title(Path(file_path).stem)
+
+    def _normalize_title(self, raw: str) -> str:
+        """Normalize medical doc titles: strip spaces, remove numbering/prefixes, title-case.
+
+        Examples:
+            "01.0-Lezione introduttiva--teoria" -> "Lezione Introduttiva Teoria"
+        """
+        title = raw.strip()
+        # Replace separators with spaces
+        title = re.sub(r"[_\-]{1,}", " ", title)
+        # Remove leading numeric prefixes like 01., 01-, 01_ , 01  or 01.1-
+        title = re.sub(r"^\s*\d{1,3}(?:[\._-]\d{1,3})?[\._\-\s]+", "", title)
+        # Collapse multiple spaces
+        title = re.sub(r"\s+", " ", title)
+        # Title case while preserving acronyms length>=3
+        def _tc(w: str) -> str:
+            return w if (len(w) >= 3 and w.isupper()) else w.capitalize()
+        title = " ".join(_tc(w) for w in title.split())
+        return title
     
     def _extract_content(self, doc: DocumentType) -> str:
         """Extract all text content from DOCX document."""

@@ -29,9 +29,10 @@ if __name__ == "__main__":
     APP_ENV = os.getenv("APP_ENV", "development")
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     
-    print(f"🚀 Avvio backend FisioRAG su {APP_HOST}:{APP_PORT}")
-    print(f"📋 Ambiente: {APP_ENV}")
-    print(f"📝 Log Level: {LOG_LEVEL}")
+    # Note: evitare caratteri emoji per compatibilità con Windows console (cp1252)
+    print(f"Avvio backend FisioRAG su {APP_HOST}:{APP_PORT}")
+    print(f"Ambiente: {APP_ENV}")
+    print(f"Log Level: {LOG_LEVEL}")
     
     uvicorn.run(
         "run_backend:app",

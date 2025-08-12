@@ -195,3 +195,4 @@ secrets/
 *.key
 *.pem
 *.crt
+node_modules

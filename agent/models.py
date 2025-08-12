@@ -3,6 +3,7 @@ Pydantic models for data validation and serialization.
 """
 
 from typing import List, Dict, Any, Optional, Literal
+import os
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict, field_validator
@@ -29,6 +30,7 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="User message")
     session_id: Optional[str] = Field(None, description="Session ID for conversation continuity")
     user_id: Optional[str] = Field(None, description="User identifier")
+    tenant_id: str = Field(default_factory=lambda: os.getenv("DEV_TENANT_UUID", ""), description="Tenant identifier (UUID string)")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     search_type: SearchType = Field(default=SearchType.HYBRID, description="Type of search to perform")
     
@@ -225,7 +227,7 @@ class IngestionResult(BaseModel):
     """Result of document ingestion."""
     document_id: str
     title: str
-    success: bool
+    success: bool = True
     chunks_created: int
     entities_extracted: int
     relationships_created: int

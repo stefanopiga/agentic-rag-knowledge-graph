@@ -58,10 +58,10 @@ git clone https://github.com/fisiorag/monitoring-configs.git
 cd monitoring-configs
 
 # 2. Start monitoring stack
-docker-compose -f monitoring/docker-compose.monitoring.yml up -d
+docker compose -f monitoring/docker-compose.monitoring.yml up -d
 
 # 3. Verify services
-docker-compose ps
+docker compose ps
 ```
 
 ### Environment Variables
@@ -468,7 +468,7 @@ fisiorag_rag_queries_total{tenant_id="healthcare_org_1", query_type="hybrid"}
 docker stats fisiorag-prometheus
 
 # Reduce retention or increase memory limit
-docker-compose.yml:
+docker-compose.yml:  # nome file invariato; usare comandi `docker compose`
   prometheus:
     deploy:
       resources:
@@ -518,7 +518,7 @@ docker logs fisiorag-alertmanager
 
 ```bash
 # Check all monitoring services
-docker-compose -f monitoring/docker-compose.monitoring.yml ps
+docker compose -f monitoring/docker-compose.monitoring.yml ps
 
 # Prometheus health
 curl http://localhost:9090/-/healthy

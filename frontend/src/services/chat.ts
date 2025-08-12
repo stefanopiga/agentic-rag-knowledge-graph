@@ -5,10 +5,49 @@ import {
   type ChatMessage,
   type ChatSession,
 } from "../types/api";
+import { startChatStream } from "@/services/stream";
+
+export interface StreamingHandlers {
+  onSession?: (sessionId: string) => void;
+  onText?: (chunk: string) => void;
+  onTools?: (tools: any[]) => void;
+  onEnd?: () => void;
+  onError?: (error: string) => void;
+}
 
 class ChatService {
   async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
-    return apiClient.post<SendMessageResponse>("/chat", request);
+    // Backend richiede snake_case e campi specifici
+    const payload: any = {
+      message: request.message,
+      tenant_id: request.tenantId,
+    };
+    if (request.sessionId) payload.session_id = request.sessionId;
+
+    const res = await apiClient.post<any>("/chat", payload);
+
+    const mapped: SendMessageResponse = {
+      message: res.message,
+      sessionId: res.session_id ?? res.sessionId,
+      sources: res.sources ?? [],
+      toolCalls: res.tools_used ?? res.toolCalls ?? [],
+    };
+
+    return mapped;
+  }
+
+  async sendStreamingMessage(
+    request: SendMessageRequest,
+    handlers: StreamingHandlers,
+    abortController?: AbortController
+  ): Promise<void> {
+    const payload: any = {
+      message: request.message,
+      tenant_id: request.tenantId,
+    };
+    if (request.sessionId) payload.session_id = request.sessionId;
+
+    return startChatStream(payload, handlers, abortController);
   }
 
   async getSessionHistory(sessionId: string): Promise<ChatMessage[]> {
