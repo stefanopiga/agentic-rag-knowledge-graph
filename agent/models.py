@@ -210,8 +210,8 @@ class IngestionConfig(BaseModel):
     max_chunk_size: int = Field(default=2000, ge=500, le=10000)
     use_semantic_chunking: bool = True
     extract_entities: bool = True
-    # New option for faster ingestion
-    skip_graph_building: bool = Field(default=False, description="Skip knowledge graph building for faster ingestion")
+    # Graph building disabilitato di default per ingestione centralizzata
+    skip_graph_building: bool = Field(default=True, description="Skip knowledge graph building (default: true)")
     
     @field_validator('chunk_overlap')
     @classmethod
