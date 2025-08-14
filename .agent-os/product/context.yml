@@ -45,8 +45,8 @@ technical_decisions:
     postgres: "Neon"
     graph: "Neo4j Aura"
   api_base_url_policy:
-    production: "https://api.fisiorag.app"   # placeholder
-    staging: "https://staging-api.fisiorag.app"  # placeholder
+    production: "https://api.fisiorag.app"
+    staging: "https://staging.api.fisiorag.app"
     development: "http://localhost:8000"
   secrets_management:
     repository_secrets: ["DATABASE_URL","NEO4J_URI","NEO4J_USER","NEO4J_PASSWORD","LLM_API_KEY","EMBEDDING_API_KEY","API_BASE_URL"]
