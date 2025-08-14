@@ -5,6 +5,7 @@ Tests for database utilities.
 import pytest
 import asyncio
 import json
+import os
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timezone, timedelta
 
@@ -33,6 +34,12 @@ class TestDatabasePool:
         pool = DatabasePool(url)
         assert pool.database_url == url
     
+    def test_init_with_env_url(self):
+        """Test initialization reads DATABASE_URL from environment when not provided."""
+        with patch.dict('os.environ', {"DATABASE_URL": "postgresql://from_env"}, clear=True):
+            pool = DatabasePool()
+            assert pool.database_url == "postgresql://from_env"
+
     def test_init_without_url(self):
         """Test initialization without URL raises error."""
         with patch.dict('os.environ', {}, clear=True):
@@ -428,3 +435,51 @@ class TestUtilityFunctions:
             result = await db_test_connection()
             
             assert result is False
+
+
+class TestHealthCheckAndStatus:
+    """Tests for health-check and pool status reporting."""
+
+    @pytest.mark.asyncio
+    async def test_health_check_success(self):
+        """Health check returns expected keys and truthy flags when dependencies exist."""
+        pool = DatabasePool("postgresql://test")
+
+        # Mock connection that simulates a healthy database with pgvector and functions available
+        mock_conn = AsyncMock()
+        mock_conn.fetchval = AsyncMock(side_effect=[
+            1,     # SELECT 1
+            True,  # vector extension exists
+            True,  # match_chunks exists
+            True,  # hybrid_search exists
+        ])
+
+        # Patch the acquire context manager to yield our mock connection
+        mock_ctx = AsyncMock()
+        mock_ctx.__aenter__.return_value = mock_conn
+        mock_ctx.__aexit__.return_value = None
+
+        with patch.object(pool, 'acquire', return_value=mock_ctx):
+            hc = await pool._health_check()
+
+        assert isinstance(hc, dict)
+        assert hc["basic_query"] is True
+        assert hc["vector_extension"] is True
+        assert "sql_functions" in hc and isinstance(hc["sql_functions"], dict)
+        assert hc["sql_functions"].get("match_chunks") is True
+        assert hc["sql_functions"].get("hybrid_search") is True
+
+    @pytest.mark.asyncio
+    async def test_health_check_failure(self):
+        """Health check gracefully handles failures and reports error structure."""
+        pool = DatabasePool("postgresql://test")
+
+        # Make acquire raise to simulate connection failure
+        with patch.object(pool, 'acquire', side_effect=Exception("connection failed")):
+            hc = await pool._health_check()
+
+        assert hc["basic_query"] is False
+        assert hc["vector_extension"] is False
+        assert hc["sql_functions"]["match_chunks"] is False
+        assert hc["sql_functions"]["hybrid_search"] is False
+        assert "error" in hc and "connection failed" in hc["error"]

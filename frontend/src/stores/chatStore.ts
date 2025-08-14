@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { type ChatState, type ChatActions } from "../types/chat";
 import { type ChatMessage } from "../types/api";
 import { chatService } from "../services/chat";
+import { startChatStream } from "@/services/stream";
 import { useAuthStore } from "./authStore";
 
 interface ChatStore extends ChatState, ChatActions {}
@@ -14,10 +15,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   currentSession: null,
   isLoading: false,
   error: null,
-  isConnected: false,
+  isConnected: true,
+  isStreaming: false,
+  streamError: null,
 
   // Actions
-  sendMessage: async (content: string) => {
+  sendMessage: async (content: string, useStream: boolean = true) => {
     const { tenant } = useAuthStore.getState();
     if (!tenant) {
       throw new Error("No tenant selected");
@@ -37,6 +40,78 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       set((state) => ({
         messages: [...state.messages, userMessage],
       }));
+
+      // Stream or non-stream
+      if (useStream) {
+        set({ isStreaming: true, isLoading: true });
+
+        const abortController = new AbortController();
+        set({ streamError: null });
+
+        let gotAnyChunk = false; // set true on session to avoid early fallback
+        const fallbackTimer = setTimeout(async () => {
+          if (get().isStreaming && !gotAnyChunk) {
+            abortController.abort();
+            try {
+              const response = await chatService.sendMessage({
+                message: content,
+                sessionId: get().currentSession || undefined,
+                tenantId: tenant.id,
+              });
+              const assistantMessage: ChatMessage = {
+                id: generateId(),
+                content: response.message,
+                role: "assistant",
+                timestamp: new Date(),
+                sources: response.sources,
+                toolCalls: response.toolCalls,
+              };
+              set((state) => ({
+                messages: [...state.messages, assistantMessage],
+                currentSession: response.sessionId,
+                isStreaming: false,
+                isLoading: false,
+              }));
+            } catch (e) {
+              set({
+                streamError: e instanceof Error ? e.message : "Stream fallback error",
+                isStreaming: false,
+                isLoading: false,
+              });
+            }
+          }
+        }, 7000);
+
+        await startChatStream(
+          {
+            message: content,
+            session_id: get().currentSession || undefined,
+            tenant_id: tenant.id,
+          },
+          {
+            onSession: (sid) => { gotAnyChunk = true; console.debug("SSE session", sid); set({ currentSession: sid }); },
+            onText: (chunk) => {
+              gotAnyChunk = true;
+              console.debug("SSE text chunk", chunk);
+              get().appendMessageChunk(chunk);
+            },
+            onTools: (tools) => get().completeMessage({ toolCalls: tools }),
+            onEnd: () => {
+              console.debug("SSE end");
+              clearTimeout(fallbackTimer);
+              set({ isStreaming: false, isLoading: false });
+            },
+            onError: (err) => {
+              console.error("SSE error", err);
+              clearTimeout(fallbackTimer);
+              set({ streamError: err, isStreaming: false, isLoading: false });
+            },
+          },
+          abortController
+        );
+
+        return;
+      }
 
       // Send to API
       const response = await chatService.sendMessage({
@@ -101,6 +176,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   appendMessageChunk: (chunk: string) => {
+    console.debug("appendMessageChunk called with:", chunk);
+
     set((state) => {
       const messages = [...state.messages];
       const lastMessage = messages[messages.length - 1];

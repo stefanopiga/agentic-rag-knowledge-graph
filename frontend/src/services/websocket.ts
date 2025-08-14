@@ -13,7 +13,11 @@ class WebSocketService {
     }
 
     const token = useAuthStore.getState().token;
-    const baseUrl = import.meta.env.VITE_WS_URL || "http://localhost:8000";
+    const baseUrl =
+      (import.meta.env.VITE_WS_URL as string) ||
+      (import.meta.env.VITE_API_BASE_URL as string) ||
+      (import.meta.env.VITE_API_URL as string) ||
+      "http://localhost:8000";
 
     this.socket = io(baseUrl, {
       auth: {

@@ -10,6 +10,11 @@ from datetime import datetime
 import json
 
 from openai import RateLimitError, APIError
+try:
+    from openai import APIConnectionError, APITimeoutError
+except Exception:  # Backward compatibility for older openai versions
+    APIConnectionError = Exception  # type: ignore
+    APITimeoutError = Exception  # type: ignore
 from dotenv import load_dotenv
 
 from .chunker import DocumentChunk
@@ -24,7 +29,7 @@ except ImportError:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from agent.providers import get_embedding_client, get_embedding_model
 
-# Load environment variables
+# Load .env without override (per-command env should take precedence during runs)
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -33,6 +38,9 @@ logger = logging.getLogger(__name__)
 embedding_client = get_embedding_client()
 EMBEDDING_MODEL = get_embedding_model()
 
+# Offline/CI mode to avoid external API calls during tests
+OFFLINE_EMBEDDINGS = os.getenv("EMBEDDINGS_OFFLINE", "")
+
 
 class EmbeddingGenerator:
     """Generates embeddings for document chunks."""
@@ -40,9 +48,10 @@ class EmbeddingGenerator:
     def __init__(
         self,
         model: str = EMBEDDING_MODEL,
-        batch_size: int = 100,
-        max_retries: int = 3,
-        retry_delay: float = 1.0
+        batch_size: int = int(os.getenv("EMBEDDING_BATCH_SIZE", "100")),
+        max_retries: int = int(os.getenv("OPENAI_MAX_RETRY", "3")),
+        retry_delay: float = float(os.getenv("OPENAI_RETRY_DELAY", "1.0")),
+        request_timeout: float = float(os.getenv("OPENAI_TIMEOUT", "120"))
     ):
         """
         Initialize embedding generator.
@@ -57,6 +66,7 @@ class EmbeddingGenerator:
         self.batch_size = batch_size
         self.max_retries = max_retries
         self.retry_delay = retry_delay
+        self.request_timeout = request_timeout
         
         # Model-specific configurations
         self.model_configs = {
@@ -85,22 +95,27 @@ class EmbeddingGenerator:
         if len(text) > self.config["max_tokens"] * 4:  # Rough token estimation
             text = text[:self.config["max_tokens"] * 4]
         
+        if OFFLINE_EMBEDDINGS:
+            return [0.0] * self.config["dimensions"]
+
         for attempt in range(self.max_retries):
             try:
                 response = await embedding_client.embeddings.create(
                     model=self.model,
-                    input=text
+                    input=text,
+                    timeout=self.request_timeout
                 )
                 
                 return response.data[0].embedding
                 
-            except RateLimitError as e:
+            except (RateLimitError, APIConnectionError, APITimeoutError) as e:
                 if attempt == self.max_retries - 1:
                     raise
                 
                 # Exponential backoff for rate limits
-                delay = self.retry_delay * (2 ** attempt)
-                logger.warning(f"Rate limit hit, retrying in {delay}s")
+                jitter = 0.8 + (0.4 * (attempt % 2))
+                delay = self.retry_delay * (2 ** attempt) * jitter
+                logger.warning(f"Transient error ({type(e).__name__}), retrying in {delay}s")
                 await asyncio.sleep(delay)
                 
             except APIError as e:
@@ -141,21 +156,26 @@ class EmbeddingGenerator:
             
             processed_texts.append(text)
         
+        if OFFLINE_EMBEDDINGS:
+            return [[0.0] * self.config["dimensions"] for _ in texts]
+
         for attempt in range(self.max_retries):
             try:
                 response = await embedding_client.embeddings.create(
                     model=self.model,
-                    input=processed_texts
+                    input=processed_texts,
+                    timeout=self.request_timeout
                 )
                 
                 return [data.embedding for data in response.data]
                 
-            except RateLimitError as e:
+            except (RateLimitError, APIConnectionError, APITimeoutError) as e:
                 if attempt == self.max_retries - 1:
                     raise
                 
-                delay = self.retry_delay * (2 ** attempt)
-                logger.warning(f"Rate limit hit, retrying batch in {delay}s")
+                jitter = 0.8 + (0.4 * (attempt % 2))
+                delay = self.retry_delay * (2 ** attempt) * jitter
+                logger.warning(f"Transient error in batch ({type(e).__name__}), retrying in {delay}s")
                 await asyncio.sleep(delay)
                 
             except APIError as e:

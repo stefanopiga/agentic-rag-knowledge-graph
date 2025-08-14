@@ -6,10 +6,12 @@ export interface ChatState {
   isLoading: boolean;
   error: string | null;
   isConnected: boolean;
+  isStreaming?: boolean;
+  streamError?: string | null;
 }
 
 export interface ChatActions {
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, useStream?: boolean) => Promise<void>;
   loadSession: (sessionId: string) => Promise<void>;
   clearMessages: () => void;
   setError: (error: string | null) => void;

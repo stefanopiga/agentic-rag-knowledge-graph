@@ -20,6 +20,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     error,
     sendMessage,
     clearMessages,
+    isStreaming,
   } = useChatStore();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -131,20 +132,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           />
         ))}
 
-        <TypingIndicator isVisible={isLoading} />
+        <TypingIndicator isVisible={!!isStreaming} />
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
       <MessageInput
         onSend={handleSendMessage}
-        disabled={isLoading || !isConnected}
+        disabled={!!isStreaming}
         placeholder={
           !isConnected
             ? "Connessione in corso..."
-            : isLoading
-            ? "Attendi risposta..."
-            : "Fai una domanda sui documenti medici..."
+            : isStreaming
+              ? "Attendi risposta..."
+              : "Fai una domanda sui documenti medici..."
         }
       />
     </div>
