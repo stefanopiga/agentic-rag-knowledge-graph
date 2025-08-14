@@ -1,0 +1,35 @@
+name: Staging Deploy (Railway)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'agent/**'
+      - 'requirements.txt'
+      - 'Procfile'
+      - 'runtime.txt'
+      - 'railway.toml'
+
+jobs:
+  deploy:
+    if: ${{ secrets.RAILWAY_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+      RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+      - name: Deploy to Railway (CI)
+        run: |
+          if [ -n "${RAILWAY_PROJECT_ID}" ]; then export RW_PROJECT="--project ${RAILWAY_PROJECT_ID}"; fi
+          if [ -n "${RAILWAY_SERVICE_ID}" ]; then export RW_SERVICE="--service ${RAILWAY_SERVICE_ID}"; fi
+          railway up --ci ${RW_PROJECT:-} ${RW_SERVICE:-}
