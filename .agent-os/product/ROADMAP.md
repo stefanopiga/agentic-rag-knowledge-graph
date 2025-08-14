@@ -1,31 +1,40 @@
-# Roadmap di FisioRAG
+# Product Roadmap
 
-## Fase 0: Implementazione Esistente
+## Phase 1: Core MVP
 
-Le seguenti funzionalità costituiscono il core attuale del sistema:
+**Goal:** RAG multi-tenant con pipeline ingestion e chat affidabile
+**Success Criteria:** Health endpoints verdi, ingestion base ok, chat streaming stabile
 
-- [x] **Backend API**: Servizio asincrono basato su FastAPI.
-- [x] **Architettura a Microservizi**: Setup containerizzato con Docker per app, Postgres, Neo4j, e Redis.
-- [x] **Database a Grafo**: Integrazione con Neo4j per il knowledge graph.
-- [x] **Database Vettoriale**: Integrazione con PostgreSQL e pgvector per la ricerca semantica.
-- [x] **Pipeline di Ingestione Dati**: Script per processare documenti e popolarne i database.
-- [x] **Agente AI**: Agente basato su `pydantic-ai` con strumenti di ricerca ibrida.
-- [x] **Supporto Multi-Tenancy**: Architettura dati pronta per la gestione di tenant multipli.
+### Features
+- [ ] Deploy staging backend + API_BASE_URL definito `[M]`
+- [ ] Seed dataset minimo per E2E cloud `[S]`
+- [ ] Test comprehensive verdi in CI `[M]`
 
-## Fase 1: Verifica e Sviluppo UI ✅ **COMPLETATA** (2025-01-19)
+### Dependencies
+- Secrets cloud, Neon/Neo4j credenziali
 
-- [x] ✅ **Sviluppo Interfaccia Utente (UI)**: **COMPLETATO** - Interfaccia React 19 + TypeScript completamente funzionale con 50+ files, 25+ componenti, Tailwind CSS 3.4.0, state management Zustand, routing React Router 7.x, production build ottimizzata (278.72 kB).
-- [ ] **Verifica delle Connessioni**: Eseguire test completi per assicurare la stabilità e l'affidabilità delle connessioni ai database (Postgres, Neo4j) e alle API esterne (OpenAI).
-- [ ] **Validazione del Core System**: Testare end-to-end la pipeline di ingestione e la qualità delle risposte fornite dall'agente RAG.
-- [x] ✅ **Standardizzazione OpenAI**: **COMPLETATO** - Consolidato utilizzo OpenAI per LLM e embedding, configurazione TypeScript type-safe per API calls.
-- [ ] **Documentazione Utente**: Creare una guida per l'utente finale su come utilizzare al meglio l'applicazione.
-- [ ] **Aumento Copertura Test**: Scrivere test di unità e di integrazione per i moduli `agent` e `ingestion` al fine di raggiungere una copertura di almeno l'80%.
+## Phase 2: Differenziatori
 
-## Fase 2: Integration & Deployment 🚀 **IN CORSO**
+**Goal:** Grafo conoscenza e analytics base
+**Success Criteria:** Query relazioni/tempi; report basici
 
-- [ ] **Frontend-Backend Integration**: Connessione completa tra interfaccia React e API FastAPI
-- [ ] **Authentication Flow End-to-End**: Sistema login completo con JWT/session management
-- [ ] **WebSocket Real-time Testing**: Chat interface con comunicazione bidirezionale
-- [ ] **Document Upload Integration**: Interface caricamento e processamento documenti
-- [ ] **Error Handling & Monitoring**: Sistema robusto gestione errori e monitoraggio
-- [ ] **Performance Optimization**: Caching, lazy loading, ottimizzazioni bundle
+### Features
+- [ ] Relazioni timeline su Neo4j `[M]`
+- [ ] Endpoint analytics chat `[S]`
+- [ ] Export sessione (pdf/docx/txt) `[S]`
+
+### Dependencies
+- Ingestion arricchita
+
+## Phase 3: Scalabilità e Polishing
+
+**Goal:** Osservabilità e hardening
+**Success Criteria:** Alerting basico, policy sicurezza
+
+### Features
+- [ ] OpenTelemetry + exporter `[M]`
+- [ ] Rate limiting e CORS tightening `[S]`
+- [ ] Hardening auth/sessioni `[M]`
+
+### Dependencies
+- Hosting prod

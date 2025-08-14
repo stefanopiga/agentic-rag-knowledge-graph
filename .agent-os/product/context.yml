@@ -1,0 +1,96 @@
+product_vision:
+  problem: "Recupero di conoscenza clinica strutturata e contenuti medici per fisioterapia con RAG e citazioni affidabili, multi-tenant"
+  target_users: "Cliniche di fisioterapia, terapisti, staff clinico; secondario: staff operativo/amministrativo"
+  value_proposition: "Risposte accurate con fonti, ingestion documentale per tenant, grafo conoscenza per relazioni e timeline, UI chat veloce"
+
+current_state:
+  implemented_features:
+    - auth_login_ui: true
+    - chat_streaming_api: true
+    - websocket_streaming_frontend: true
+    - ingestion_pipeline_graphiti: true
+    - multi_tenancy_graph: true
+    - health_endpoints: true
+    - ci_github_actions_cloud_suite: true
+    - smoke_test_frontend_node: true
+  non_obvious_capabilities:
+    - "Fallback DummyDriver in test con store in-memory per episodi"
+    - "Index Episode(tenant_id) su Neo4j per isolamento tenant"
+    - "Script verifica schema Neon (psycopg2)"
+  external_integrations:
+    - "Neon PostgreSQL"
+    - "Neo4j Aura"
+    - "OpenAI LLM ed embeddings"
+
+roadmap_short:
+  - title: "Staging cloud e API pubblica"
+    outcome: "Backend deploy su staging, API_BASE_URL definito, smoke test e health verdi"
+    done_when: "Workflow Cloud Shared Test Suite verde su main con API_BASE_URL di staging"
+  - title: "E2E cloud stabile"
+    outcome: "Test comprehensive cloud passano con dataset seed minimo e secrets ruotati"
+    done_when: "tests/comprehensive/* verdi in CI con EMBEDDINGS_OFFLINE=1 dove previsto"
+  - title: "UX login+chat consolidata"
+    outcome: "SSE/WS robusti, riconnessioni e gestione errori, flag analytics opzionali"
+    done_when: "Sessioni persistenti e streaming affidabile in ambienti cloud"
+
+technical_decisions:
+  llm:
+    provider: "openai"
+    model_default: "gpt-4.1-nano"
+  embeddings:
+    provider: "openai"
+    model: "text-embedding-3-small"
+    vector_dim: 1536
+  data_stores:
+    postgres: "Neon"
+    graph: "Neo4j Aura"
+  api_base_url_policy:
+    production: "https://api.fisiorag.app"   # placeholder
+    staging: "https://staging-api.fisiorag.app"  # placeholder
+    development: "http://localhost:8000"
+  secrets_management:
+    repository_secrets: ["DATABASE_URL","NEO4J_URI","NEO4J_USER","NEO4J_PASSWORD","LLM_API_KEY","EMBEDDING_API_KEY","API_BASE_URL"]
+  multi_tenancy_policy:
+    tenant_isolation: "graph-level (Episode.tenant_id index)"
+    access_control: "JWT Bearer su Authorization; binding tenant lato server nelle query"
+  logging_observability:
+    backend: "Python logging + logs CI; target: OpenTelemetry + exporter (Loki/Grafana)"
+    frontend: "console; target: Sentry opzionale in produzione"
+
+team_preferences:
+  code_style_backend:
+    formatter: "black"
+    linter: "ruff"
+    typing: "mypy"
+    pre_commit: true
+  code_style_frontend:
+    tsconfig: true
+    eslint: true
+    prettier: "planned"
+  git_workflow:
+    branches: "feature branches → PR su main"
+    commits: "conventional commits"
+    reviews_pr: "required"
+  testing_policy:
+    unit_coverage_target: "70%"
+    e2e_strategy: "CI Cloud Shared Test Suite"
+  release_versioning:
+    scheme: "semver"
+    environments: ["dev","staging","prod"]
+
+tech_stack_detected:
+  backend:
+    language: "Python 3.11"
+    framework: "FastAPI"
+    libs: ["graphiti-core","neo4j","psycopg2-binary","asyncpg","pydantic","sse-starlette"]
+    testing: ["pytest","pytest-asyncio","pytest-cov"]
+    packaging: "uv (astral)"
+  frontend:
+    toolchain: "Vite + React + TypeScript"
+    node: "20"
+    ws_client: "socket.io-client"
+  ci_cd:
+    github_actions: ["cloud-tests.yml","ci-cd.yml","security.yml","dependency-updates.yml"]
+  databases:
+    relational: "PostgreSQL (Neon)"
+    graph: "Neo4j (Aura)"
