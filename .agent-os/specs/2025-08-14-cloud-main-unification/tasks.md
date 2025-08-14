@@ -19,7 +19,7 @@
   - [x] 3.4 Imposta `API_BASE_URL`
 
 - [ ] 4. Deploy Staging Backend (Railway)
-  - [ ] 4.1 Aggiungi `Procfile`, `runtime.txt`, `railway.toml`
+  - [x] 4.1 Aggiungi `Procfile`, `runtime.txt`, `railway.toml`
   - [ ] 4.2 Configura secrets in Railway (DATABASE_URL, NEO4J_*, LLM_*, EMBEDDING_*)
   - [ ] 4.3 Imposta `CORS_ALLOWED_ORIGINS` coerente con frontend staging
   - [ ] 4.4 Verifica `/health` e `/health/detailed`
