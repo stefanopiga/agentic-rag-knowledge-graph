@@ -1,0 +1,16 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "uvicorn agent.api:app --host 0.0.0.0 --port ${PORT}"
+healthcheckPath = "/health"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
+
+[variables]
+APP_ENV = "production"
+LOG_LEVEL = "INFO"
+ENABLE_METRICS = "false"
+# Impostare in Railway i seguenti secrets:
+# DATABASE_URL, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, LLM_API_KEY, EMBEDDING_API_KEY
+# CORS_ALLOWED_ORIGINS come lista separata da virgole (es. "https://staging.fisiorag.app,https://fisiorag.vercel.app")
