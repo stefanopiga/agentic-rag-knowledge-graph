@@ -18,17 +18,27 @@
   - [x] 3.3 Imposta `LLM_API_KEY`, `EMBEDDING_API_KEY`
   - [x] 3.4 Imposta `API_BASE_URL`
 
+- [ ] 4. Deploy Staging Backend (Railway)
+  - [ ] 4.1 Aggiungi `Procfile`, `runtime.txt`, `railway.toml`
+  - [ ] 4.2 Configura secrets in Railway (DATABASE_URL, NEO4J_*, LLM_*, EMBEDDING_*)
+  - [ ] 4.3 Imposta `CORS_ALLOWED_ORIGINS` coerente con frontend staging
+  - [ ] 4.4 Verifica `/health` e `/health/detailed`
+
+- [ ] 5. Frontend Staging (Vercel)
+  - [ ] 5.1 Configura progetto Vercel su repo `frontend/`
+  - [ ] 5.2 Imposta env `VITE_API_BASE_URL` e `VITE_WS_URL` verso staging backend
+  - [ ] 5.3 Esegui smoke test contro staging
+
+- [ ] 6. CI: aggiungi job `staging-smoke`
+  - [ ] 6.1 Step Node per `frontend/scripts/smoke_test.mjs` con base staging
+  - [ ] 6.2 Step Python per ping `/health` backend staging
+
 ## Command Reference
 
 ```bash
-# 1) Unifica codice in main
-git checkout main
-git merge --allow-unrelated-histories cloud-shared-ci -m "merge sanitized code into main"
-git push origin main
+# 4) Deploy Railway
+railway up  # oppure deploy GitHub integration
 
-# 2) Re-run workflow
-gh workflow run "Cloud Shared Test Suite" -r main
-# Verifica esito e log
-gh run list --workflow="cloud-tests.yml" --limit 1
-gh run view <RUN_ID> --log
+# 6) CI smoke run (node)
+node frontend/scripts/smoke_test.mjs
 ```
