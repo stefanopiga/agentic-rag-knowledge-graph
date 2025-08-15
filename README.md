@@ -128,6 +128,16 @@ pnpm build
 # Oppure: scripts\run_cloud_tests.cmd -q
 ```
 
+### **4. Railway (Staging Backend)**
+
+```powershell
+# Imposta variabili ambiente richieste e poi esegui lo script helper
+# Richiede Railway CLI installata e accesso al progetto
+setx API_BASE_URL "https://staging.api.fisiorag.app"
+setx CORS_ALLOWED_ORIGINS "https://staging.fisiorag.app,https://fisiorag.vercel.app"
+scripts\railway_set_secrets.ps1
+```
+
 ### 3. **Database Setup**
 
 ```powershell
