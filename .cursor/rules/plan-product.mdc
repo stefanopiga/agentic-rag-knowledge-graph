@@ -6,4 +6,9 @@ alwaysApply: false
 
 Plan a new product and install Agent OS in its codebase.
 
-Refer to the instructions located in @~/.agent-os/instructions/plan-product.md
+Refer to the instructions located in @~/.agent-os/instructions/core/plan-product.md
+
+## Work Flow notes
+
+- usare sempre e solo `desktop-commander` mcp server per eseguire comandi terminale e lettura o modifiche a files.
+- controllare mcp servers disponibili per eseguire i task in modo più efficiente.

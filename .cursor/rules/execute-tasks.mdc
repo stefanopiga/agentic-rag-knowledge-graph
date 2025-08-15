@@ -6,4 +6,9 @@ alwaysApply: false
 
 Execute the next task.
 
-Refer to the instructions located in @~/.agent-os/instructions/execute-tasks.md
+Refer to the instructions located in @~/.agent-os/instructions/core/execute-tasks.md
+
+## Work Flow notes
+
+- usare sempre e solo `desktop-commander` mcp server per eseguire ecomandi terminale , leggere e modificare files.
+- controlla la presenza di mcp server tools per agevolare lo svolgimewnto dei tasks.

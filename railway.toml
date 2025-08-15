@@ -11,6 +11,8 @@ restartPolicyMaxRetries = 5
 APP_ENV = "production"
 LOG_LEVEL = "INFO"
 ENABLE_METRICS = "false"
+API_BASE_URL = "https://staging.api.fisiorag.app"
+CORS_ALLOWED_ORIGINS = "https://staging.fisiorag.app,https://fisiorag.vercel.app"
 # Impostare in Railway i seguenti secrets:
 # DATABASE_URL, NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, LLM_API_KEY, EMBEDDING_API_KEY
 # CORS_ALLOWED_ORIGINS come lista separata da virgole (es. "https://staging.fisiorag.app,https://fisiorag.vercel.app")
