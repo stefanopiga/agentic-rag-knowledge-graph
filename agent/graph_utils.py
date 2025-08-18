@@ -90,6 +90,39 @@ class GraphitiClient:
                 # Best-effort: ignore index creation failures to avoid blocking startup
                 logger.warning("Skipping Episode(tenant_id) index creation; proceeding without it")
 
+            # Add indexes for Entity nodes to optimize entity queries
+            # Index on tenant_id for entity filtering by tenant
+            try:
+                await self.graphiti.driver.execute_query(
+                    "CREATE INDEX entity_tenant_id_index IF NOT EXISTS FOR (e:Entity) ON (e.tenant_id)"
+                )
+            except Exception:
+                logger.warning("Skipping Entity(tenant_id) index creation; proceeding without it")
+
+            # Composite index on tenant_id, name for entity lookup optimization
+            try:
+                await self.graphiti.driver.execute_query(
+                    "CREATE INDEX entity_tenant_name_index IF NOT EXISTS FOR (e:Entity) ON (e.tenant_id, e.name)"
+                )
+            except Exception:
+                logger.warning("Skipping Entity(tenant_id, name) composite index creation; proceeding without it")
+
+            # Composite index on tenant_id, type for entity type filtering
+            try:
+                await self.graphiti.driver.execute_query(
+                    "CREATE INDEX entity_tenant_type_index IF NOT EXISTS FOR (e:Entity) ON (e.tenant_id, e.type)"
+                )
+            except Exception:
+                logger.warning("Skipping Entity(tenant_id, type) composite index creation; proceeding without it")
+
+            # Index on entity name for full-text search and lookup
+            try:
+                await self.graphiti.driver.execute_query(
+                    "CREATE INDEX entity_name_index IF NOT EXISTS FOR (e:Entity) ON (e.name)"
+                )
+            except Exception:
+                logger.warning("Skipping Entity(name) index creation; proceeding without it")
+
             self._initialized = True
             logger.info("Graphiti client initialized successfully.")
 
@@ -177,17 +210,90 @@ class GraphitiClient:
             return []
 
     async def get_related_entities(self, entity_name: str, tenant_id: UUID, depth: int = 1) -> Dict[str, Any]:
-        """Get entities related to a given entity with tenant isolation."""
+        """Get entities related to a given entity with tenant isolation and depth-limited traversal."""
         if not self._initialized:
             await self.initialize()
         
-        # This requires a more complex Cypher query to traverse relationships
-        # within a tenant's data. Placeholder for now.
-        return {
-            "central_entity": entity_name,
-            "related_facts": [],
-            "note": "Tenant-isolated relationship search needs a specific Cypher implementation."
-        }
+        # Enforce max depth limit of 3
+        depth = min(max(depth, 1), 3)
+        
+        logger.info(f"Finding related entities for '{entity_name}' (tenant: {tenant_id}, depth: {depth})")
+        
+        try:
+            # Build variable-length relationship pattern based on depth
+            relationship_pattern = f"*1..{depth}"
+            
+            # Cypher query for depth-limited entity traversal with tenant isolation
+            cypher_query = f"""
+            MATCH (central:Entity {{name: $entity_name, tenant_id: $tenant_id}})
+            OPTIONAL MATCH (central)-[r:CO_OCCURS{relationship_pattern}]-(related:Entity)
+            WHERE related.tenant_id = $tenant_id 
+              AND related.name <> $entity_name
+            WITH central, related, r
+            ORDER BY r.weight DESC NULLS LAST
+            LIMIT 50
+            RETURN 
+                central.name AS central_name,
+                central.type AS central_type,
+                collect(DISTINCT {{
+                    name: related.name,
+                    type: related.type,
+                    confidence: related.confidence,
+                    relationship_type: type(r),
+                    relationship_weight: r.weight,
+                    chunk_id: r.chunk_id,
+                    document_title: r.document_title,
+                    created_at: r.created_at
+                }}) AS related_entities
+            """
+            
+            records, summary, _ = await self.graphiti.driver.execute_query(
+                cypher_query,
+                entity_name=entity_name,
+                tenant_id=str(tenant_id)
+            )
+            
+            # Format response
+            if records and len(records) > 0:
+                result = dict(records[0])
+                related_entities = [entity for entity in result.get("related_entities", []) if entity["name"]]
+                
+                logger.info(f"Found {len(related_entities)} related entities for '{entity_name}'")
+                
+                return {
+                    "central_entity": entity_name,
+                    "central_entity_type": result.get("central_type"),
+                    "related_entities": related_entities,
+                    "depth_searched": depth,
+                    "tenant_id": str(tenant_id),
+                    "total_found": len(related_entities)
+                }
+            else:
+                # Entity not found or no relationships
+                logger.warning(f"No related entities found for '{entity_name}' (tenant: {tenant_id})")
+                return {
+                    "central_entity": entity_name,
+                    "central_entity_type": None,
+                    "related_entities": [],
+                    "depth_searched": depth,
+                    "tenant_id": str(tenant_id),
+                    "total_found": 0
+                }
+                
+        except Exception as e:
+            error_msg = f"Error retrieving related entities for '{entity_name}': {str(e)}"
+            logger.error(error_msg)
+            
+            # Return error response with graceful degradation
+            return {
+                "central_entity": entity_name,
+                "central_entity_type": None,
+                "related_entities": [],
+                "depth_searched": depth,
+                "tenant_id": str(tenant_id),
+                "total_found": 0,
+                "error": error_msg
+            }
         
     async def get_entity_timeline(self, entity_name: str, tenant_id: UUID, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None) -> List[Dict[str, Any]]:
         """Get timeline of facts for an entity with tenant isolation."""
