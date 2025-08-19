@@ -18,7 +18,7 @@ export default defineConfig({
         manualChunks: {
           vendor: ["react", "react-dom"],
           ui: ["zustand"],
-          utils: ["axios", "socket.io-client"],
+          utils: ["axios"],
         },
       },
     },
@@ -30,11 +30,6 @@ export default defineConfig({
         target: "http://localhost:8000",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-      "/socket.io": {
-        target: "http://localhost:8000",
-        changeOrigin: true,
-        ws: true,
       },
     },
   },
