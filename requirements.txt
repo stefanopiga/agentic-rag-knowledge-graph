@@ -92,3 +92,5 @@ yarl==1.20.1
 zipp==3.23.0
 python-docx==1.2.0
 PyPDF2==3.0.1
+spacy>=3.7.0
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl

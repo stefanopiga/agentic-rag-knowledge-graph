@@ -38,6 +38,8 @@ dependencies = [
     "PyPDF2>=3.0.1",
     "numpy>=2.3.1",
     "psycopg2-binary>=2.9.0",
+    "spacy>=3.7.0",
+    "structlog>=25.4.0",
 ]
 
 [project.optional-dependencies]
