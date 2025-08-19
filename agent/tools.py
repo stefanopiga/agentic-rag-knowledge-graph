@@ -27,6 +27,7 @@ from .graph_utils import (
 from .models import ChunkResult, GraphSearchResult, DocumentMetadata
 from .providers import get_embedding_client, get_embedding_model
 from .cache_manager import cache_manager
+from .monitoring import monitor_performance
 
 # Load environment variables
 load_dotenv()
@@ -38,6 +39,7 @@ embedding_client = get_embedding_client()
 EMBEDDING_MODEL = get_embedding_model()
 
 
+@monitor_performance("embedding_generation", warning_threshold=2.0)
 async def generate_embedding(text: str, tenant_id: Optional[str] = None) -> List[float]:
     """Generate embedding for text with caching."""
     try:
@@ -97,6 +99,7 @@ class EntityTimelineInput(BaseModel):
 
 
 # Tool Implementation Functions
+@monitor_performance("vector_search", warning_threshold=1.0)
 async def vector_search_tool(input_data: VectorSearchInput, tenant_id: UUID) -> List[ChunkResult]:
     """Perform vector similarity search for a specific tenant with caching."""
     try:
@@ -131,6 +134,7 @@ async def vector_search_tool(input_data: VectorSearchInput, tenant_id: UUID) -> 
         logger.error(f"Vector search failed for tenant {tenant_id}: {e}")
         return []
 
+@monitor_performance("graph_search", warning_threshold=2.0)
 async def graph_search_tool(input_data: GraphSearchInput, tenant_id: UUID) -> List[GraphSearchResult]:
     """Search the knowledge graph for a specific tenant with caching."""
     try:
@@ -161,6 +165,7 @@ async def graph_search_tool(input_data: GraphSearchInput, tenant_id: UUID) -> Li
         logger.error(f"Graph search failed for tenant {tenant_id}: {e}")
         return []
 
+@monitor_performance("hybrid_search", warning_threshold=1.5)
 async def hybrid_search_tool(input_data: HybridSearchInput, tenant_id: UUID) -> List[ChunkResult]:
     """Perform hybrid search for a specific tenant with caching."""
     try:
@@ -252,6 +257,7 @@ async def get_entity_timeline_tool(input_data: EntityTimelineInput, tenant_id: U
         return []
 
 # Combined search function for agent use
+@monitor_performance("comprehensive_search", warning_threshold=3.0)
 async def perform_comprehensive_search(
     query: str,
     tenant_id: UUID,

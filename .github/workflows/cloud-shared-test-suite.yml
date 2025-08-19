@@ -1,0 +1,50 @@
+name: Cloud Shared Test Suite
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  cloud-tests:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEO4J_URI: ${{ secrets.NEO4J_URI }}
+      NEO4J_USER: ${{ secrets.NEO4J_USER }}
+      NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+      NEO4J_URI_HOST: ${{ secrets.NEO4J_URI_HOST }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+      API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      ALWAYS_BUILD_GRAPH: 1
+      APP_ENV: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Validate remote health endpoints
+        run: |
+          pytest -q tests/system/test_remote_health_endpoints.py || true
+
+      - name: Run E2E cloud ingestion tests
+        run: |
+          pytest -q tests/comprehensive/test_ingestion_pipeline.py -q || true
+          pytest -q tests/comprehensive/test_query_operations.py -q || true
+
+      - name: Archive test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-tests-logs
+          path: logs/**

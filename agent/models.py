@@ -245,6 +245,24 @@ class ErrorResponse(BaseModel):
 
 
 # Health Check Models
+class DatabaseConnection(BaseModel):
+    """Database connection status."""
+    status: str
+    active_connections: int
+    pool_size: Optional[int] = None
+    active_sessions: Optional[int] = None
+
+
+class SystemMetrics(BaseModel):
+    """System metrics for health endpoint."""
+    active_sessions: int
+    total_queries_today: int
+    avg_response_time: float
+    cache_hit_rate: Optional[float] = None
+    memory_usage_mb: float
+    cpu_usage_percent: float
+
+
 class HealthStatus(BaseModel):
     """Health check status."""
     status: Literal["healthy", "degraded", "unhealthy"]
@@ -253,3 +271,13 @@ class HealthStatus(BaseModel):
     llm_connection: bool
     version: str
     timestamp: datetime
+
+
+class EnhancedHealthStatus(BaseModel):
+    """Enhanced health check status with real metrics."""
+    status: Literal["healthy", "degraded", "unhealthy"]
+    timestamp: datetime
+    databases: Dict[str, DatabaseConnection]
+    metrics: SystemMetrics
+    version: str
+    uptime_seconds: float

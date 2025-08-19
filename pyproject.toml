@@ -38,6 +38,10 @@ dependencies = [
     "PyPDF2>=3.0.1",
     "numpy>=2.3.1",
     "psycopg2-binary>=2.9.0",
+    "spacy>=3.7.0",
+    "structlog>=25.4.0",
+    "prometheus-client>=0.22.1",
+    "prometheus-fastapi-instrumentator>=7.1.0",
 ]
 
 [project.optional-dependencies]

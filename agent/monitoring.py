@@ -11,6 +11,7 @@ from typing import Dict, Any, Optional, Callable
 from functools import wraps
 from datetime import datetime
 import os
+import psutil
 
 from prometheus_client import (
     Counter, Histogram, Gauge, Info, 
@@ -198,6 +199,26 @@ cache_operation_duration = Histogram(
     'Duration of cache operations',
     ['operation'],
     buckets=[0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5]
+)
+
+# Performance Monitoring Metrics
+operation_duration = Histogram(
+    'fisiorag_operation_duration_seconds',
+    'Time spent on operations',
+    ['operation_name'],
+    buckets=[0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0]
+)
+
+operation_errors = Counter(
+    'fisiorag_operation_errors_total',
+    'Total operation errors',
+    ['operation_name', 'error_type']
+)
+
+operation_total = Counter(
+    'fisiorag_operation_total',
+    'Total operations executed',
+    ['operation_name', 'status']  # status: success, error
 )
 
 # Knowledge Graph Node/Relationship Metrics
@@ -438,6 +459,134 @@ def track_db_operation(database_type: str, operation: str):
     return decorator
 
 
+def monitor_performance(operation_name: str, warning_threshold: float = 1.0):
+    """
+    Decorator for timing operations and error tracking with performance monitoring.
+    
+    Args:
+        operation_name: Name of the operation for metrics labeling
+        warning_threshold: Duration in seconds above which to log warning (default: 1.0s)
+    
+    Returns:
+        Decorated function with performance monitoring
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            start_time = time.time()
+            status = "success"
+            error_type = None
+            
+            try:
+                result = await func(*args, **kwargs)
+                return result
+            except Exception as e:
+                status = "error"
+                error_type = type(e).__name__
+                
+                # Record error metrics
+                operation_errors.labels(
+                    operation_name=operation_name,
+                    error_type=error_type
+                ).inc()
+                
+                logger.error(
+                    "Operation failed",
+                    operation=operation_name,
+                    error=str(e),
+                    error_type=error_type
+                )
+                raise
+            finally:
+                duration = time.time() - start_time
+                
+                # Record operation metrics
+                operation_total.labels(
+                    operation_name=operation_name,
+                    status=status
+                ).inc()
+                
+                operation_duration.labels(
+                    operation_name=operation_name
+                ).observe(duration)
+                
+                # Log performance info/warning
+                if duration > warning_threshold:
+                    logger.warning(
+                        "Slow operation detected",
+                        operation=operation_name,
+                        duration=duration,
+                        threshold=warning_threshold,
+                        status=status
+                    )
+                else:
+                    logger.info(
+                        "Operation completed",
+                        operation=operation_name,
+                        duration=duration,
+                        status=status
+                    )
+        
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            start_time = time.time()
+            status = "success"
+            error_type = None
+            
+            try:
+                result = func(*args, **kwargs)
+                return result
+            except Exception as e:
+                status = "error"
+                error_type = type(e).__name__
+                
+                # Record error metrics
+                operation_errors.labels(
+                    operation_name=operation_name,
+                    error_type=error_type
+                ).inc()
+                
+                logger.error(
+                    "Operation failed",
+                    operation=operation_name,
+                    error=str(e),
+                    error_type=error_type
+                )
+                raise
+            finally:
+                duration = time.time() - start_time
+                
+                # Record operation metrics
+                operation_total.labels(
+                    operation_name=operation_name,
+                    status=status
+                ).inc()
+                
+                operation_duration.labels(
+                    operation_name=operation_name
+                ).observe(duration)
+                
+                # Log performance info/warning
+                if duration > warning_threshold:
+                    logger.warning(
+                        "Slow operation detected",
+                        operation=operation_name,
+                        duration=duration,
+                        threshold=warning_threshold,
+                        status=status
+                    )
+                else:
+                    logger.info(
+                        "Operation completed",
+                        operation=operation_name,
+                        duration=duration,
+                        status=status
+                    )
+        
+        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+    return decorator
+
+
 # ==============================================================================
 # MONITORING MIDDLEWARE
 # ==============================================================================
@@ -555,13 +704,65 @@ def setup_monitoring(app: FastAPI, enable_metrics: bool = True) -> Optional[Inst
 
 
 def update_connection_metrics():
-    """Update database connection metrics (call periodically)."""
+    """Update database connection metrics with real values from connection pools."""
     try:
-        # These would be updated by actual connection pool monitoring
-        # For now, set placeholder values
-        db_connections_active.labels(database_type="postgresql").set(5)
-        db_connections_active.labels(database_type="neo4j").set(2)
-        db_connections_active.labels(database_type="redis").set(1)
+        # Import global pool instances
+        from .db_utils import db_pool
+        from .graph_utils import graph_client  
+        from .cache_manager import cache_manager
+        
+        # PostgreSQL connection metrics
+        pg_active_connections = 0
+        if db_pool.pool is not None:
+            try:
+                total_connections = db_pool.pool.get_size()
+                idle_connections = db_pool.pool.get_idle_size()
+                pg_active_connections = total_connections - idle_connections
+            except Exception as e:
+                logger.warning(f"Failed to get PostgreSQL pool stats: {e}")
+                pg_active_connections = 0
+        else:
+            logger.warning("PostgreSQL pool not initialized")
+            
+        db_connections_active.labels(database_type="postgresql").set(pg_active_connections)
+        
+        # Neo4j connection metrics
+        neo4j_active_connections = 0
+        if (graph_client._initialized and 
+            graph_client.graphiti is not None and 
+            hasattr(graph_client.graphiti, 'driver')):
+            try:
+                # Access Neo4j driver connection pool statistics
+                driver = graph_client.graphiti.driver
+                if hasattr(driver, '_pool') and hasattr(driver._pool, 'in_use'):
+                    neo4j_active_connections = driver._pool.in_use
+                else:
+                    # Fallback: try to get active connections count
+                    neo4j_active_connections = getattr(driver._pool, 'active_connections', 0)
+            except Exception as e:
+                logger.warning(f"Failed to get Neo4j pool stats: {e}")
+                neo4j_active_connections = 0
+        else:
+            logger.warning("Neo4j client not initialized or unavailable")
+            
+        db_connections_active.labels(database_type="neo4j").set(neo4j_active_connections)
+        
+        # Redis connection metrics
+        redis_active_connections = 0
+        if cache_manager.redis is not None:
+            try:
+                # For Redis metrics in sync context, use a simplified approach
+                # since we can't reliably call async methods from sync context
+                # Set default to 1 for active Redis connection
+                redis_active_connections = 1  # Default for active Redis connection
+            except Exception as e:
+                logger.warning(f"Failed to get Redis connection stats: {e}")
+                redis_active_connections = 0
+        else:
+            logger.warning("Redis cache manager not initialized")
+            
+        db_connections_active.labels(database_type="redis").set(redis_active_connections)
+        
     except Exception as e:
         logger.error("Failed to update connection metrics", error=str(e))
 
@@ -584,11 +785,334 @@ async def update_knowledge_graph_metrics(tenant_id: str = "default"):
 
 
 # ==============================================================================
+# SYSTEM METRICS COLLECTION
+# ==============================================================================
+
+async def get_system_metrics() -> Dict[str, Any]:
+    """
+    Calculate system metrics for health endpoint.
+    
+    Returns:
+        Dict with active_sessions, total_queries_today, avg_response_time, 
+        cache_hit_rate, memory_usage_mb, cpu_usage_percent
+    """
+    metrics = {
+        'active_sessions': 0,
+        'total_queries_today': 0,
+        'avg_response_time': 0.0,
+        'cache_hit_rate': 0.0,
+        'memory_usage_mb': 0.0,
+        'cpu_usage_percent': 0.0
+    }
+    
+    try:
+        # 2.3 - Implementare active sessions count da database query
+        from .db_utils import db_pool
+        
+        if db_pool.pool is not None:
+            try:
+                async with db_pool.acquire() as conn:
+                    # Query to count active sessions (assuming sessions table exists)
+                    # Adjust query based on actual schema
+                    result = await conn.fetchrow("""
+                        SELECT COUNT(*) as count 
+                        FROM sessions 
+                        WHERE expires_at > NOW() OR expires_at IS NULL
+                    """)
+                    if result:
+                        metrics['active_sessions'] = result['count']
+            except Exception as e:
+                logger.warning(f"Failed to get active sessions count: {e}")
+        else:
+            logger.warning("Database pool not initialized for session count")
+            
+    except Exception as e:
+        logger.warning(f"Failed to access database for session metrics: {e}")
+    
+    try:
+        # 2.4 - Implementare total queries today counter da Prometheus metrics
+        # Get total RAG queries count (all time, as we don't have daily reset)
+        if hasattr(rag_queries_total, '_value') and hasattr(rag_queries_total._value, '_value'):
+            metrics['total_queries_today'] = rag_queries_total._value._value
+        else:
+            # Fallback: try to access metric value differently
+            try:
+                # Access metric samples to get current value
+                samples = list(rag_queries_total.collect())[0].samples
+                if samples:
+                    metrics['total_queries_today'] = int(samples[0].value)
+            except Exception:
+                metrics['total_queries_today'] = 0
+                
+    except Exception as e:
+        logger.warning(f"Failed to get query count metrics: {e}")
+    
+    try:
+        # 2.5 - Calcolare average response time da Summary metrics  
+        if (hasattr(rag_query_duration, '_sum') and hasattr(rag_query_duration, '_count') and
+            hasattr(rag_query_duration._sum, '_value') and hasattr(rag_query_duration._count, '_value')):
+            
+            total_time = rag_query_duration._sum._value
+            total_count = rag_query_duration._count._value
+            
+            if total_count > 0:
+                metrics['avg_response_time'] = total_time / total_count
+            else:
+                metrics['avg_response_time'] = 0.0
+        else:
+            # Fallback: try to access metric samples
+            try:
+                samples = list(rag_query_duration.collect())[0].samples
+                sum_value = 0
+                count_value = 0
+                
+                for sample in samples:
+                    if sample.name.endswith('_sum'):
+                        sum_value = sample.value
+                    elif sample.name.endswith('_count'):
+                        count_value = sample.value
+                        
+                if count_value > 0:
+                    metrics['avg_response_time'] = sum_value / count_value
+                    
+            except Exception:
+                metrics['avg_response_time'] = 0.0
+                
+    except Exception as e:
+        logger.warning(f"Failed to calculate average response time: {e}")
+    
+    try:
+        # Calculate cache hit rate from cache operations metrics
+        cache_hits = 0
+        cache_misses = 0
+        
+        try:
+            # Get cache hit metric
+            hit_metric = cache_operations_total.labels(operation='get', result='hit')
+            if hasattr(hit_metric, '_value') and hasattr(hit_metric._value, '_value'):
+                cache_hits = hit_metric._value._value
+                
+            # Get cache miss metric  
+            miss_metric = cache_operations_total.labels(operation='get', result='miss')
+            if hasattr(miss_metric, '_value') and hasattr(miss_metric._value, '_value'):
+                cache_misses = miss_metric._value._value
+                
+        except Exception:
+            # Fallback: access through metric collection
+            try:
+                samples = list(cache_operations_total.collect())[0].samples
+                for sample in samples:
+                    labels = sample.labels
+                    if labels.get('operation') == 'get':
+                        if labels.get('result') == 'hit':
+                            cache_hits = sample.value
+                        elif labels.get('result') == 'miss':
+                            cache_misses = sample.value
+            except Exception:
+                pass
+        
+        # Calculate hit rate
+        total_cache_ops = cache_hits + cache_misses
+        if total_cache_ops > 0:
+            metrics['cache_hit_rate'] = cache_hits / total_cache_ops
+        else:
+            metrics['cache_hit_rate'] = 0.0
+            
+    except Exception as e:
+        logger.warning(f"Failed to calculate cache hit rate: {e}")
+    
+    try:
+        # 2.6 - Implementare memory e CPU usage tracking con psutil
+        process = psutil.Process()
+        
+        # Memory usage in MB
+        memory_info = process.memory_info()
+        metrics['memory_usage_mb'] = memory_info.rss / 1024 / 1024
+        
+        # CPU usage percentage
+        metrics['cpu_usage_percent'] = process.cpu_percent()
+        
+    except Exception as e:
+        logger.warning(f"Failed to get system resource usage: {e}")
+    
+    return metrics
+
+
+# ==============================================================================
 # HEALTH CHECK ENHANCEMENTS
 # ==============================================================================
 
+async def get_connection_metrics() -> Dict[str, Any]:
+    """Get real connection metrics from database pools."""
+    connections = {}
+    
+    try:
+        # PostgreSQL connection metrics
+        from .db_utils import db_pool
+        if db_pool.pool is not None:
+            try:
+                total_connections = db_pool.pool.get_size()
+                idle_connections = db_pool.pool.get_idle_size()
+                active_connections = total_connections - idle_connections
+                connections["postgresql"] = {
+                    "status": "connected",
+                    "active_connections": active_connections,
+                    "pool_size": total_connections
+                }
+            except Exception as e:
+                logger.warning(f"Failed to get PostgreSQL metrics: {e}")
+                connections["postgresql"] = {
+                    "status": "error",
+                    "active_connections": 0,
+                    "pool_size": 0
+                }
+        else:
+            connections["postgresql"] = {
+                "status": "not_initialized",
+                "active_connections": 0,
+                "pool_size": 0
+            }
+    except Exception as e:
+        logger.warning(f"Failed to access PostgreSQL pool: {e}")
+        connections["postgresql"] = {
+            "status": "error",
+            "active_connections": 0,
+            "pool_size": 0
+        }
+    
+    try:
+        # Neo4j connection metrics
+        from .graph_utils import graph_client
+        if (graph_client._initialized and 
+            graph_client.graphiti is not None and 
+            hasattr(graph_client.graphiti, 'driver')):
+            try:
+                driver = graph_client.graphiti.driver
+                # Try to get active session count
+                active_sessions = 0
+                if hasattr(driver, '_pool'):
+                    if hasattr(driver._pool, 'in_use'):
+                        active_sessions = driver._pool.in_use
+                    elif hasattr(driver._pool, 'active_connections'):
+                        active_sessions = driver._pool.active_connections
+                
+                connections["neo4j"] = {
+                    "status": "connected",
+                    "active_sessions": active_sessions,
+                    "pool_size": getattr(driver._pool, 'max_connection_pool_size', 5)
+                }
+            except Exception as e:
+                logger.warning(f"Failed to get Neo4j metrics: {e}")
+                connections["neo4j"] = {
+                    "status": "error",
+                    "active_sessions": 0,
+                    "pool_size": 0
+                }
+        else:
+            connections["neo4j"] = {
+                "status": "not_initialized", 
+                "active_sessions": 0,
+                "pool_size": 0
+            }
+    except Exception as e:
+        logger.warning(f"Failed to access Neo4j client: {e}")
+        connections["neo4j"] = {
+            "status": "error",
+            "active_sessions": 0,
+            "pool_size": 0
+        }
+    
+    try:
+        # Redis connection metrics
+        from .cache_manager import cache_manager
+        if cache_manager.redis is not None:
+            try:
+                connections["redis"] = {
+                    "status": "connected",
+                    "active_connections": 1  # Simplified: 1 if Redis is connected
+                }
+            except Exception as e:
+                logger.warning(f"Failed to get Redis metrics: {e}")
+                connections["redis"] = {
+                    "status": "error",
+                    "active_connections": 0
+                }
+        else:
+            connections["redis"] = {
+                "status": "not_initialized",
+                "active_connections": 0
+            }
+    except Exception as e:
+        logger.warning(f"Failed to access Redis cache: {e}")
+        connections["redis"] = {
+            "status": "error",
+            "active_connections": 0
+        }
+    
+    return connections
+
+
+async def get_enhanced_health_status(app_start_time: float) -> Dict[str, Any]:
+    """Get enhanced health status with real metrics and connection info."""
+    try:
+        # Get basic connection statuses
+        from .db_utils import test_connection
+        from .graph_utils import test_graph_connection
+        from .cache_manager import cache_manager
+        
+        db_status = await test_connection()
+        graph_status = await test_graph_connection() 
+        cache_health = await cache_manager.health_check()
+        cache_status = cache_health.get("status") == "healthy"
+        
+        # Determine overall status
+        if db_status and graph_status and cache_status:
+            status = "healthy"
+        elif (db_status and graph_status) or (db_status and cache_status) or (graph_status and cache_status):
+            status = "degraded"
+        else:
+            status = "unhealthy"
+            
+        # Get real metrics
+        system_metrics = await get_system_metrics()
+        connection_metrics = await get_connection_metrics()
+        
+        # Calculate uptime
+        uptime_seconds = time.time() - app_start_time
+        
+        return {
+            "status": status,
+            "timestamp": datetime.now().isoformat(),
+            "databases": connection_metrics,
+            "metrics": system_metrics,
+            "version": "0.1.0",
+            "uptime_seconds": uptime_seconds
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get enhanced health status: {e}")
+        # Fallback to basic status
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.now().isoformat(),
+            "databases": {},
+            "metrics": {
+                "active_sessions": 0,
+                "total_queries_today": 0,
+                "avg_response_time": 0.0,
+                "cache_hit_rate": 0.0,
+                "memory_usage_mb": 0.0,
+                "cpu_usage_percent": 0.0
+            },
+            "version": "0.1.0",
+            "uptime_seconds": 0.0
+        }
+
+
 async def get_detailed_health_status() -> Dict[str, Any]:
-    """Get detailed health status including metrics."""
+    """Get detailed health status including metrics (legacy format)."""
+    system_metrics = await get_system_metrics()
+    
     return {
         "timestamp": datetime.now().isoformat(),
         "services": {
@@ -598,12 +1122,7 @@ async def get_detailed_health_status() -> Dict[str, Any]:
             "cache": "healthy",
             "llm_provider": "healthy"
         },
-        "metrics": {
-            "active_sessions": sessions_active._value._value if hasattr(sessions_active, '_value') else 0,
-            "total_queries_today": "calculated_value",  # Would calculate from metrics
-            "avg_response_time": "calculated_value",    # Would calculate from histograms
-            "cache_hit_rate": "calculated_value"        # Would calculate from cache metrics
-        },
+        "metrics": system_metrics,
         "version": "0.1.0",
-        "uptime_seconds": "calculated_value"
+        "uptime_seconds": time.time() - getattr(get_detailed_health_status, '_start_time', time.time())
     }

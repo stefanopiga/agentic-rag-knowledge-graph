@@ -1,0 +1,14 @@
+{
+  "tables": {},
+  "functions": {},
+  "indexes": {},
+  "extensions": {},
+  "analysis": {
+    "table_overlaps": {},
+    "missing_tables": {},
+    "column_differences": {},
+    "function_conflicts": {},
+    "extension_differences": {},
+    "consolidation_recommendations": []
+  }
+}
