@@ -10,6 +10,10 @@ from contextlib import asynccontextmanager
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
+import time
+
+# Application startup tracking for uptime calculation
+app_start_time = time.time()
 
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import StreamingResponse, PlainTextResponse
@@ -56,7 +60,8 @@ try:
         track_vector_search,
         track_graph_query,
         get_detailed_health_status,
-        update_connection_metrics
+        update_connection_metrics,
+        monitor_performance
     )
 except Exception:
     MONITORING_AVAILABLE = False
@@ -475,6 +480,7 @@ async def save_conversation_turn(
     )
 
 
+@monitor_performance("agent_execution", warning_threshold=5.0)
 async def execute_agent(
     message: str,
     session_id: str,
@@ -552,35 +558,42 @@ async def execute_agent(
 
 
 # API Endpoints
-@app.get("/health", response_model=HealthStatus)
-async def health_check():
-    """Health check endpoint."""
+@app.get("/health")
+async def health_check(enhanced: bool = False):
+    """Health check endpoint with optional enhanced metrics."""
     try:
-        # Test database connections
-        db_status = await test_connection()
-        graph_status = await test_graph_connection()
-        cache_health = await cache_manager.health_check()
-        cache_status = cache_health.get("status") == "healthy"
-        
-        # Update connection metrics
-        update_connection_metrics()
-        
-        # Determine overall status
-        if db_status and graph_status and cache_status:
-            status = "healthy"
-        elif (db_status and graph_status) or (db_status and cache_status) or (graph_status and cache_status):
-            status = "degraded"
+        if enhanced:
+            # Return enhanced health status with real metrics
+            from .monitoring import get_enhanced_health_status
+            enhanced_status = await get_enhanced_health_status(app_start_time)
+            return enhanced_status
         else:
-            status = "unhealthy"
-        
-        return HealthStatus(
-            status=status,
-            database=db_status,
-            graph_database=graph_status,
-            llm_connection=True,  # Assume OK if we can respond
-            version="0.1.0",
-            timestamp=datetime.now()
-        )
+            # Return basic health status (legacy format)
+            # Test database connections
+            db_status = await test_connection()
+            graph_status = await test_graph_connection()
+            cache_health = await cache_manager.health_check()
+            cache_status = cache_health.get("status") == "healthy"
+            
+            # Update connection metrics
+            update_connection_metrics()
+            
+            # Determine overall status
+            if db_status and graph_status and cache_status:
+                status = "healthy"
+            elif (db_status and graph_status) or (db_status and cache_status) or (graph_status and cache_status):
+                status = "degraded"
+            else:
+                status = "unhealthy"
+            
+            return HealthStatus(
+                status=status,
+                database=db_status,
+                graph_database=graph_status,
+                llm_connection=True,  # Assume OK if we can respond
+                version="0.1.0",
+                timestamp=datetime.now()
+            )
         
     except Exception as e:
         logger.error(f"Health check failed: {e}")

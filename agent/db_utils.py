@@ -14,6 +14,7 @@ import logging
 import asyncpg
 from asyncpg.pool import Pool
 from dotenv import load_dotenv
+from .monitoring import monitor_performance
 
 # Load environment variables
 load_dotenv()
@@ -359,6 +360,7 @@ async def list_documents(
 
 
 # Vector Search Functions
+@monitor_performance("db_vector_search", warning_threshold=0.5)
 async def vector_search(*args, **kwargs) -> List[Dict[str, Any]]:
     """Vector similarity search supporting both legacy and tenant-aware signatures.
 
@@ -396,6 +398,7 @@ async def vector_search(*args, **kwargs) -> List[Dict[str, Any]]:
         return [dict(row) for row in rows]
 
 
+@monitor_performance("db_hybrid_search", warning_threshold=0.5)
 async def hybrid_search(
     embedding: List[float],
     query_text: str,

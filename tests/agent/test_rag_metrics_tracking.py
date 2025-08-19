@@ -8,7 +8,7 @@ import asyncpg
 from unittest.mock import Mock, AsyncMock, patch, MagicMock, PropertyMock
 from uuid import uuid4
 
-# Test imports  
+# Test imports
 from agent.db_utils import hybrid_search, get_document_chunks
 from agent.monitoring import update_connection_metrics
 
