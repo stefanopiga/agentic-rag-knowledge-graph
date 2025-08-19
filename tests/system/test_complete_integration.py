@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test completo integrazione RAG + Django + Neo4j
-per il progetto fisio-rag-saas
+Test completo integrazione RAG + FastAPI + Neo4j
+per il progetto FisioRAG
 """
 
 import os
@@ -60,8 +60,8 @@ def test_integration():
     
     # Test 4: Database operations
     try:
-        # Test query Django
-        from django.db import connection
+        # Test query FastAPI database
+        from agent.db_utils import test_connection
         cursor = connection.cursor()
         cursor.execute("SELECT COUNT(*) FROM accounts_tenant")
         tenant_count = cursor.fetchone()[0]

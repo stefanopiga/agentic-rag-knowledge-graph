@@ -80,10 +80,13 @@ class TestLegacyCleanup:
         memory_bank_dir = project_root / "memory-bank"
         assert not memory_bank_dir.exists(), "Directory memory-bank/ non rimossa"
     
-    def test_fisio_rag_saas_directory_removed(self):
-        """Verifica che directory fisio_rag_saas/ Django sia stata rimossa."""
-        django_dir = project_root / "fisio_rag_saas"
-        assert not django_dir.exists(), "Directory fisio_rag_saas/ non rimossa"
+    def test_django_components_removed(self):
+        """Verifica che componenti Django siano stati rimossi."""
+        # Check that Django-specific directories don't exist
+        django_dirs = ["fisio_rag_saas", "fisio-rag-saas"]
+        for django_dir_name in django_dirs:
+            django_dir = project_root / django_dir_name
+            assert not django_dir.exists(), f"Directory {django_dir_name}/ non rimossa"
     
     def test_current_spec_exists(self):
         """Verifica che la spec corrente sia accessibile."""
@@ -119,8 +122,8 @@ if __name__ == "__main__":
         test_instance.test_memory_bank_directory_removed()
         print("✅ Memory Bank Removal test passed")
         
-        test_instance.test_fisio_rag_saas_directory_removed()
-        print("✅ Django Directory Removal test passed")
+        test_instance.test_django_components_removed()
+        print("✅ Django Components Removal test passed")
         
         test_instance.test_current_spec_exists()
         print("✅ Current Spec Exists test passed")

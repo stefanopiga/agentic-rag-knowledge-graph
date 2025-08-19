@@ -10,7 +10,7 @@ Sistema di Retrieval-Augmented Generation (RAG) specializzato per documenti medi
 - **Database Vettoriale**: PostgreSQL + pgvector
 - **Knowledge Graph**: Neo4j
 - **Backend API**: FastAPI (Agente AI)
-- **Frontend SaaS**: Django (Gestione Multi-Tenant)
+- **Frontend**: React + TypeScript (SPA)
 - **Embedding**: OpenAI text-embedding-3-small/large
 - **LLM**: OpenAI GPT-4o-mini
 
@@ -523,21 +523,21 @@ async def health_check() -> HealthStatus:
     """
 ```
 
-### 5.2 Django SaaS Application
+### 5.2 React Frontend Application
 
-**Directory**: `fisio_rag_saas/`
+**Directory**: `frontend/`
 
-#### Multi-Tenancy Django
+#### Single Page Application
 
-- **Accounts App**: Gestione utenti e tenant
-- **Medical Content App**: Gestione documenti medici
-- **RAG Engine App**: Interfaccia conversazioni
+- **React + TypeScript**: Interfaccia utente moderna
+- **Zustand State Management**: Gestione stato client
+- **Component Architecture**: Struttura modulare riutilizzabile
 
 #### API Integration
 
 - REST client per FastAPI agent
-- Session management
-- User authentication/authorization
+- SSE streaming per real-time communication  
+- Authentication/authorization tramite token
 
 ---
 
@@ -963,7 +963,7 @@ CHUNK_OVERLAP=200
 - Schema completo multi-tenant
 - Indici ottimizzati per performance
 - Constraint per data integrity
-- Django compatibility
+- FastAPI compatibility
 
 ### Monitoraggio Performance
 

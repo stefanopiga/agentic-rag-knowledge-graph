@@ -8,15 +8,24 @@ import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from uuid import uuid4
 
-from agent.cache_manager import CacheManager
+# Handle optional Redis dependency
+try:
+    from agent.cache_manager import CacheManager
+    CACHE_AVAILABLE = True
+except ImportError:
+    CACHE_AVAILABLE = False
+    CacheManager = None
 
 
+@pytest.mark.skipif(not CACHE_AVAILABLE, reason="Redis cache manager not available")
 class TestCacheStatisticsTracking:
     """Test cache hit/miss tracking and statistics collection."""
 
     @pytest.fixture
     def cache_manager(self):
         """Create cache manager instance for testing."""
+        if not CACHE_AVAILABLE:
+            pytest.skip("Cache manager not available")
         return CacheManager()
 
     @pytest.mark.asyncio

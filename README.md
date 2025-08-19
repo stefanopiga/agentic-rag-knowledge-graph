@@ -69,8 +69,8 @@ Sistema RAG (Retrieval-Augmented Generation) agentico, multi-tenant e basato su 
 
 - **AI Engine**: Pydantic AI + Graphiti
 - **API**: FastAPI (async)
-- **Databases**: PostgreSQL (pgvector) + Neo4j + Redis
-- **SaaS**: Django multi-tenant
+- **Databases**: PostgreSQL (pgvector) + Neo4j + Redis (optional)
+- **Architecture**: Single FastAPI backend with multi-tenant support
 
 ### Issues Correnti 🔧
 
@@ -165,13 +165,12 @@ agentic-rag-knowledge-graph/
 │   ├── src/stores/              # → Zustand state management
 │   └── dist/                    # → Production build ready
 │
-├── agent/                       # ⚠️ BACKEND AI AGENT (issues)
+├── agent/                       # 🤖 FASTAPI AI AGENT
 │   ├── api.py                   # → FastAPI endpoints
 │   ├── agent.py                 # → Pydantic AI agent
 │   └── tools.py                 # → RAG tools (vector + graph)
 │
 ├── ingestion/                   # 📥 DOCUMENT PROCESSING
-├── fisio_rag_saas/             # 🏢 DJANGO SAAS APP
 ├── sql/                        # 🗄️ DATABASE SCHEMAS
 └── tests/                      # 🧪 COMPREHENSIVE TEST SUITE
 ```

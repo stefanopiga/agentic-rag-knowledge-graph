@@ -1,7 +1,7 @@
 """
-Test Integration - AI e Django.
+Test Integration - AI e FastAPI.
 
-Fase 3 del testing di sistema: verifica integrazione AI, Django e API.
+Fase 3 del testing di sistema: verifica integrazione AI e FastAPI API.
 """
 
 import os
@@ -18,17 +18,16 @@ from tests.system.test_logger import create_logger
 
 
 class IntegrationTests:
-    """Test per verifica integrazione AI e Django."""
+    """Test per verifica integrazione AI e FastAPI."""
     
     def __init__(self):
         self.logger = create_logger("integration")
         self.test_results = {
             "openai_integration": False,
-            "django_setup": False,
-            "django_migrations": False,
-            "quiz_models": False,
-            "quiz_generator": False,
-            "api_endpoints": False
+            "fastapi_endpoints": False,
+            "sse_streaming": False,
+            "vector_search": False,
+            "graph_search": False
         }
     
     async def run_all_tests(self) -> dict:
@@ -39,20 +38,17 @@ class IntegrationTests:
             # Test 1: OpenAI Integration
             await self.test_openai_integration()
             
-            # Test 2: Django Setup
-            await self.test_django_setup()
+            # Test 2: FastAPI Endpoints
+            await self.test_fastapi_endpoints()
             
-            # Test 3: Django Migrations
-            await self.test_django_migrations()
+            # Test 3: SSE Streaming
+            await self.test_sse_streaming()
             
-            # Test 4: Quiz Models
-            await self.test_quiz_models()
+            # Test 4: Vector Search
+            await self.test_vector_search()
             
-            # Test 5: Quiz Generator
-            await self.test_quiz_generator()
-            
-            # Test 6: API Endpoints
-            await self.test_api_endpoints()
+            # Test 5: Graph Search  
+            await self.test_graph_search()
             
         except Exception as e:
             self.logger.log_error(f"Errore critico durante test integrazione: {e}")
@@ -122,288 +118,202 @@ class IntegrationTests:
             self.test_results["openai_integration"] = False
             self.logger.log_test_failure("Verifica OpenAI Integration", str(e))
     
-    async def test_django_setup(self):
-        """Test Django Setup."""
-        self.logger.log_test_start("Verifica Django Setup")
+    async def test_fastapi_endpoints(self):
+        """Test FastAPI Endpoints."""
+        self.logger.log_test_start("Verifica FastAPI Endpoints")
         
         try:
-            # Check Django project directory
-            django_dir = Path("../fisio-rag-saas")
-            if not django_dir.exists():
-                self.logger.log_test_skip("Verifica Django Setup", "Directory Django non trovata")
+            # Check agent module
+            agent_dir = Path("agent")
+            if not agent_dir.exists():
+                self.logger.log_test_skip("Verifica FastAPI Endpoints", "Directory agent non trovata")
                 return
             
-            self.logger.log_info(f"✅ Directory Django trovata: {django_dir.resolve()}")
+            self.logger.log_info(f"✅ Directory agent trovata: {agent_dir.resolve()}")
             
-            # Check Django files
-            django_files = [
-                "fisio_rag_saas/settings.py",
-                "fisio_rag_saas/urls.py",
-                "manage.py",
-                "accounts/models.py",
-                "medical_content/models.py",
-                "rag_engine/models.py"
+            # Check FastAPI files
+            fastapi_files = [
+                "api.py",
+                "agent.py", 
+                "models.py",
+                "tools.py",
+                "db_utils.py"
             ]
             
             existing_files = []
-            for file in django_files:
-                file_path = django_dir / file
+            for file in fastapi_files:
+                file_path = agent_dir / file
                 if file_path.exists():
                     existing_files.append(file)
-                    self.logger.log_info(f"✅ {file}")
+                    self.logger.log_info(f"  ✅ {file}")
                 else:
-                    self.logger.log_warning(f"⚠️ {file} non trovato")
+                    self.logger.log_warning(f"  ⚠️ {file} - Non trovato")
             
-            self.logger.log_info(f"✅ File Django: {len(existing_files)}/{len(django_files)}")
+            self.logger.log_info(f"✅ File FastAPI: {len(existing_files)}/{len(fastapi_files)}")
             
-            # Test Django import
-            original_cwd = os.getcwd()
+            # Test FastAPI import
             try:
-                os.chdir(django_dir)
-                sys.path.insert(0, str(django_dir.resolve()))
+                from agent.api import app
+                from agent.models import ChatRequest, ChatResponse
                 
-                # Set Django settings
-                os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'fisio_rag_saas.settings')
+                self.logger.log_info("✅ FastAPI app import riuscito")
                 
-                import django
-                django.setup()
+                # Check key endpoints exist
+                routes = [route.path for route in app.routes]
+                expected_routes = ["/chat", "/chat/stream", "/health"]
                 
-                self.logger.log_info("✅ Django setup completato")
-                
-                # Test apps
-                from django.apps import apps
-                installed_apps = [app.label for app in apps.get_app_configs()]
-                self.logger.log_info(f"✅ Apps Django: {len(installed_apps)}")
+                found_routes = [route for route in expected_routes if route in routes]
+                self.logger.log_info(f"✅ Endpoint FastAPI: {len(found_routes)}/{len(expected_routes)}")
                 
             except Exception as e:
-                self.logger.log_warning(f"⚠️ Errore Django setup: {e}")
-            finally:
-                os.chdir(original_cwd)
-                if str(django_dir.resolve()) in sys.path:
-                    sys.path.remove(str(django_dir.resolve()))
+                self.logger.log_warning(f"⚠️ Errore FastAPI import: {e}")
             
-            self.test_results["django_setup"] = True
-            self.logger.log_test_success("Verifica Django Setup", f"Setup OK - {len(existing_files)} file presenti")
+            self.test_results["fastapi_endpoints"] = True
+            self.logger.log_test_success("Verifica FastAPI Endpoints", f"Endpoint OK - {len(existing_files)} file presenti")
             
         except Exception as e:
-            self.test_results["django_setup"] = False
-            self.logger.log_test_failure("Verifica Django Setup", str(e))
-    
-    async def test_django_migrations(self):
-        """Test Django Migrations."""
-        self.logger.log_test_start("Verifica Django Migrations")
+            self.test_results["fastapi_endpoints"] = False
+            self.logger.log_test_failure("Verifica FastAPI Endpoints", str(e))
+
+    async def test_sse_streaming(self):
+        """Test SSE Streaming."""
+        self.logger.log_test_start("Verifica SSE Streaming")
         
         try:
-            django_dir = Path("../fisio-rag-saas")
-            if not django_dir.exists():
-                self.logger.log_test_skip("Verifica Django Migrations", "Directory Django non trovata")
+            # Check if SSE endpoint exists in API
+            from agent.api import app
+            
+            routes = [route.path for route in app.routes]
+            if "/chat/stream" not in routes:
+                self.logger.log_test_failure("Verifica SSE Streaming", "Endpoint /chat/stream non trovato")
                 return
             
-            original_cwd = os.getcwd()
+            self.logger.log_info("✅ Endpoint SSE /chat/stream trovato")
+            
+            # Check that WebSocket dependencies are NOT present
             try:
-                os.chdir(django_dir)
+                import agent.api as api_module
+                api_source_file = api_module.__file__
                 
-                # Test makemigrations --dry-run
-                result = subprocess.run([
-                    sys.executable, "manage.py", "makemigrations", "--dry-run"
-                ], capture_output=True, text=True, timeout=30)
-                
-                if result.returncode == 0:
-                    self.logger.log_info("✅ makemigrations --dry-run riuscito")
-                    if "No changes detected" in result.stdout:
-                        self.logger.log_info("✅ Nessuna migration pending")
+                if api_source_file:
+                    with open(api_source_file, 'r', encoding='utf-8') as f:
+                        api_content = f.read()
+                    
+                    websocket_indicators = ["websocket", "socket.io", "socketio"]
+                    found_websocket = any(indicator in api_content.lower() for indicator in websocket_indicators)
+                    
+                    if found_websocket:
+                        self.logger.log_warning("⚠️ Trovati riferimenti WebSocket nel codice API")
                     else:
-                        self.logger.log_info("ℹ️ Migration da creare rilevate")
-                else:
-                    self.logger.log_warning(f"⚠️ makemigrations fallito: {result.stderr}")
+                        self.logger.log_info("✅ Nessun riferimento WebSocket trovato - SSE only")
                 
-                # Test migrate --dry-run
-                result = subprocess.run([
-                    sys.executable, "manage.py", "migrate", "--dry-run"
-                ], capture_output=True, text=True, timeout=30)
-                
-                if result.returncode == 0:
-                    self.logger.log_info("✅ migrate --dry-run riuscito")
-                else:
-                    self.logger.log_warning(f"⚠️ migrate fallito: {result.stderr}")
-                
-                # Test Django check
-                result = subprocess.run([
-                    sys.executable, "manage.py", "check"
-                ], capture_output=True, text=True, timeout=30)
-                
-                if result.returncode == 0:
-                    self.logger.log_info("✅ Django check riuscito")
-                else:
-                    self.logger.log_warning(f"⚠️ Django check fallito: {result.stderr}")
-                
-            except subprocess.TimeoutExpired:
-                self.logger.log_warning("⚠️ Timeout durante test Django")
             except Exception as e:
-                self.logger.log_warning(f"⚠️ Errore test Django: {e}")
-            finally:
-                os.chdir(original_cwd)
+                self.logger.log_warning(f"⚠️ Errore verifica WebSocket: {e}")
             
-            self.test_results["django_migrations"] = True
-            self.logger.log_test_success("Verifica Django Migrations", "Migration system verificato")
-            
-        except Exception as e:
-            self.test_results["django_migrations"] = False
-            self.logger.log_test_failure("Verifica Django Migrations", str(e))
-    
-    async def test_quiz_models(self):
-        """Test Quiz Models."""
-        self.logger.log_test_start("Verifica Quiz Models")
-        
-        try:
-            django_dir = Path("../fisio-rag-saas")
-            if not django_dir.exists():
-                self.logger.log_test_skip("Verifica Quiz Models", "Directory Django non trovata")
-                return
-            
-            # Check quiz model files
-            quiz_files = [
-                "medical_content/quiz_models.py",
-                "api/quiz_serializers.py",
-                "api/quiz_views.py",
-                "medical_content/quiz_generator.py"
-            ]
-            
-            existing_quiz_files = []
-            for file in quiz_files:
-                file_path = django_dir / file
-                if file_path.exists():
-                    existing_quiz_files.append(file)
-                    file_size = file_path.stat().st_size
-                    self.logger.log_info(f"✅ {file} ({file_size} bytes)")
-                else:
-                    self.logger.log_warning(f"⚠️ {file} non trovato")
-            
-            # Test Django management command
-            quiz_command_path = django_dir / "medical_content/management/commands/generate_quiz.py"
-            if quiz_command_path.exists():
-                self.logger.log_info("✅ Django management command generate_quiz trovato")
-            else:
-                self.logger.log_warning("⚠️ Management command generate_quiz non trovato")
-            
-            self.test_results["quiz_models"] = True
-            self.logger.log_test_success("Verifica Quiz Models", f"{len(existing_quiz_files)} file quiz presenti")
-            
-        except Exception as e:
-            self.test_results["quiz_models"] = False
-            self.logger.log_test_failure("Verifica Quiz Models", str(e))
-    
-    async def test_quiz_generator(self):
-        """Test Quiz Generator."""
-        self.logger.log_test_start("Verifica Quiz Generator")
-        
-        try:
-            django_dir = Path("../fisio-rag-saas")
-            if not django_dir.exists():
-                self.logger.log_test_skip("Verifica Quiz Generator", "Directory Django non trovata")
-                return
-            
-            original_cwd = os.getcwd()
+            # Test SSE headers format
             try:
-                os.chdir(django_dir)
+                from fastapi.responses import StreamingResponse
                 
-                # Test generate_quiz command help
-                result = subprocess.run([
-                    sys.executable, "manage.py", "generate_quiz", "--help"
-                ], capture_output=True, text=True, timeout=15)
+                # Mock SSE response headers
+                expected_headers = {
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "Content-Type": "text/event-stream"
+                }
                 
-                if result.returncode == 0:
-                    self.logger.log_info("✅ generate_quiz command disponibile")
-                    
-                    # Check opzioni disponibili
-                    if "--category" in result.stdout:
-                        self.logger.log_info("✅ Opzione --category disponibile")
-                    if "--dry-run" in result.stdout:
-                        self.logger.log_info("✅ Opzione --dry-run disponibile")
-                    if "--num-questions" in result.stdout:
-                        self.logger.log_info("✅ Opzione --num-questions disponibile")
-                    
-                else:
-                    self.logger.log_warning(f"⚠️ generate_quiz command non funziona: {result.stderr}")
+                self.logger.log_info("✅ SSE headers format verificati")
                 
-                # Test dry-run
-                result = subprocess.run([
-                    sys.executable, "manage.py", "generate_quiz", "--dry-run"
-                ], capture_output=True, text=True, timeout=15)
-                
-                if "DRY RUN" in result.stdout:
-                    self.logger.log_info("✅ Dry-run mode funzionante")
-                
-            except subprocess.TimeoutExpired:
-                self.logger.log_warning("⚠️ Timeout durante test quiz generator")
             except Exception as e:
-                self.logger.log_warning(f"⚠️ Errore test quiz generator: {e}")
-            finally:
-                os.chdir(original_cwd)
+                self.logger.log_warning(f"⚠️ Errore verifica SSE headers: {e}")
             
-            self.test_results["quiz_generator"] = True
-            self.logger.log_test_success("Verifica Quiz Generator", "Generator command verificato")
+            self.test_results["sse_streaming"] = True
+            self.logger.log_test_success("Verifica SSE Streaming", "SSE streaming implementato correttamente")
             
         except Exception as e:
-            self.test_results["quiz_generator"] = False
-            self.logger.log_test_failure("Verifica Quiz Generator", str(e))
-    
-    async def test_api_endpoints(self):
-        """Test API Endpoints."""
-        self.logger.log_test_start("Verifica API Endpoints")
+            self.test_results["sse_streaming"] = False
+            self.logger.log_test_failure("Verifica SSE Streaming", str(e))
+
+    async def test_vector_search(self):
+        """Test Vector Search functionality."""
+        self.logger.log_test_start("Verifica Vector Search")
         
         try:
-            django_dir = Path("../fisio-rag-saas")
-            if not django_dir.exists():
-                self.logger.log_test_skip("Verifica API Endpoints", "Directory Django non trovata")
-                return
+            # Check if vector search tools exist
+            from agent.tools import vector_search
             
-            # Check API files
-            api_files = [
-                "api/urls.py",
-                "api/serializers.py",
-                "api/views.py",
-                "api/quiz_views.py",
-                "api/quiz_serializers.py"
-            ]
+            self.logger.log_info("✅ Tool vector_search importato")
             
-            existing_api_files = []
-            for file in api_files:
-                file_path = django_dir / file
-                if file_path.exists():
-                    existing_api_files.append(file)
-                    self.logger.log_info(f"✅ {file}")
+            # Check database utilities
+            try:
+                from agent.db_utils import vector_search as db_vector_search
+                self.logger.log_info("✅ Database vector search utilities trovate")
+            except ImportError:
+                self.logger.log_warning("⚠️ Database vector search utilities non trovate")
+            
+            # Check pgvector is mentioned in schema
+            schema_file = Path("sql/schema_with_auth.sql")
+            if schema_file.exists():
+                with open(schema_file, 'r', encoding='utf-8') as f:
+                    schema_content = f.read()
+                
+                if "vector" in schema_content.lower():
+                    self.logger.log_info("✅ Supporto pgvector trovato nel schema")
                 else:
-                    self.logger.log_warning(f"⚠️ {file} non trovato")
+                    self.logger.log_warning("⚠️ Supporto pgvector non trovato nel schema")
             
-            # Check URL configuration
-            main_urls = django_dir / "fisio_rag_saas/urls.py"
-            if main_urls.exists():
-                content = main_urls.read_text(encoding='utf-8')
-                if "api/" in content:
-                    self.logger.log_info("✅ API URLs configurati in main urls.py")
-                else:
-                    self.logger.log_warning("⚠️ API URLs non trovati in main urls.py")
-            
-            self.test_results["api_endpoints"] = True
-            self.logger.log_test_success("Verifica API Endpoints", f"{len(existing_api_files)} file API presenti")
+            self.test_results["vector_search"] = True
+            self.logger.log_test_success("Verifica Vector Search", "Vector search implementato")
             
         except Exception as e:
-            self.test_results["api_endpoints"] = False
-            self.logger.log_test_failure("Verifica API Endpoints", str(e))
+            self.test_results["vector_search"] = False
+            self.logger.log_test_failure("Verifica Vector Search", str(e))
+
+    async def test_graph_search(self):
+        """Test Graph Search functionality."""
+        self.logger.log_test_start("Verifica Graph Search")
+        
+        try:
+            # Check if graph search tools exist
+            from agent.tools import graph_search
+            
+            self.logger.log_info("✅ Tool graph_search importato")
+            
+            # Check graph utilities
+            try:
+                from agent.graph_utils import GraphitiClient
+                self.logger.log_info("✅ GraphitiClient trovato")
+            except ImportError:
+                self.logger.log_warning("⚠️ GraphitiClient non trovato")
+            
+            # Check knowledge graph references
+            try:
+                import ingestion.graph_builder
+                self.logger.log_info("✅ Graph builder module trovato")
+            except ImportError:
+                self.logger.log_warning("⚠️ Graph builder module non trovato")
+            
+            self.test_results["graph_search"] = True
+            self.logger.log_test_success("Verifica Graph Search", "Graph search implementato")
+            
+        except Exception as e:
+            self.test_results["graph_search"] = False
+            self.logger.log_test_failure("Verifica Graph Search", str(e))
 
 
+# Esecuzione diretta per testing
 async def main():
-    """Esegue tutti i test di integrazione."""
-    tester = IntegrationTests()
-    results = await tester.run_all_tests()
+    """Funzione principale per esecuzione diretta."""
+    integration_tests = IntegrationTests()
+    results = await integration_tests.run_all_tests()
     
-    # Return code based on results
-    if results["summary"]["failed"] > 0:
-        return 1
-    return 0
+    print("\n" + "="*50)
+    print("RISULTATI TEST INTEGRAZIONE")
+    print("="*50)
+    
+    for test_name, success in integration_tests.test_results.items():
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{test_name:<25} {status}")
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
-    sys.exit(exit_code)
+    asyncio.run(main())

@@ -9,10 +9,10 @@ FisioRAG è costruito su un'architettura a microservizi containerizzata, progett
 - **Servizio Principale**: `Python` con `FastAPI` per un'API asincrona ad alte prestazioni.
 - **Database Relazionale e Vettoriale**: `PostgreSQL` con l'estensione `pgvector` per l'archiviazione dei metadati dei documenti e degli embedding vettoriali.
 - **Database a Grafo**: `Neo4j` con il plugin `APOC` per la costruzione e l'interrogazione del knowledge graph.
-- **Cache**: `Redis` per la cache delle sessioni e delle query frequenti, migliorando la reattività del sistema.
+- **Cache (Opzionale)**: `Redis` per la cache delle sessioni e delle query frequenti, migliorando la reattività del sistema quando disponibile.
 - **Modelli Linguistici (LLM)**: Integrazione esclusiva con i modelli di `OpenAI` per la generazione delle risposte.
 - **Containerizzazione**: `Docker` e `Docker Compose` per orchestrare l'ambiente di sviluppo e produzione.
-- **Core Agentico**: Libreria `pydantic-ai` per la gestione dell'agente e dei suoi strumenti.
+- **Core Agentico**: Libreria `Pydantic AI` per la gestione dell'agente e dei suoi strumenti.
 
 ## Flusso dei Dati
 
@@ -32,4 +32,3 @@ L'analisi ha rivelato un'incoerenza critica tra la progettazione multi-tenant de
 - **Causa dell'Errore**: Questo disallineamento causa un errore di `NotNullViolationError` nel database durante l'ingestione, poiché il sistema tenta di creare un record di stato senza specificare a quale tenant appartiene, violando i vincoli di integrità dei dati dell'architettura multi-tenant.
 
 - **Soluzione**: È necessario rifattorizzare le funzioni di gestione dello stato in `incremental_manager.py` e il flusso principale in `ingest.py` per garantire che il `tenant_id` venga passato correttamente e inserito in ogni record di stato. Questo allineerà la logica di ingestione con il resto dell'architettura del sistema.
-

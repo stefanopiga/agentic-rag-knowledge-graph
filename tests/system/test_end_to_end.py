@@ -261,10 +261,9 @@ class EndToEndTests:
         self.logger.log_test_start("Test generazione quiz")
         
         try:
-            django_dir = Path("../fisio-rag-saas")
-            if not django_dir.exists():
-                self.logger.log_test_skip("Test generazione quiz", "Directory Django non trovata")
-                return
+            # Django components have been removed - skip Django-specific tests
+            self.logger.log_test_skip("Test generazione quiz", "Django components removed - now FastAPI only")
+            return
             
             # Test quiz generator logic
             quiz_generator_path = django_dir / "medical_content/quiz_generator.py"

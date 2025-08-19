@@ -13,6 +13,7 @@ from agent.db_utils import hybrid_search, get_document_chunks
 from agent.monitoring import update_connection_metrics
 
 
+@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring dependencies not available")
 class TestRAGMetricsTracking:
     """Test metrics tracking for RAG operations."""
     
