@@ -1,0 +1,3710 @@
+{
+  "tables": {
+    "documents": {
+      "legacy": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "title",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "title TEXT NOT NULL"
+          },
+          {
+            "name": "source",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "source TEXT NOT NULL"
+          },
+          {
+            "name": "content",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content TEXT NOT NULL"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "legacy",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    title TEXT NOT NULL,\n    source TEXT NOT NULL,\n    content TEXT NOT NULL,\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      },
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "title",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "title TEXT NOT NULL"
+          },
+          {
+            "name": "source",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "source TEXT NOT NULL"
+          },
+          {
+            "name": "content",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content TEXT NOT NULL"
+          },
+          {
+            "name": "--",
+            "type": "Relationships",
+            "properties": [],
+            "definition": "-- Relationships"
+          },
+          {
+            "name": "category_id",
+            "type": "UUID",
+            "properties": [],
+            "definition": "category_id UUID REFERENCES medical_content_medicalcategory(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "ingestion_status_id",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "ingestion_status_id INTEGER REFERENCES document_ingestion_status(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "--",
+            "type": "Structured",
+            "properties": [],
+            "definition": "-- Structured citation data"
+          },
+          {
+            "name": "category",
+            "type": "VARCHAR(100)",
+            "properties": [],
+            "definition": "category VARCHAR(100)"
+          },
+          {
+            "name": "document_order",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "document_order INTEGER"
+          },
+          {
+            "name": "priority_weight",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "priority_weight INTEGER DEFAULT 100"
+          },
+          {
+            "name": "--",
+            "type": "File",
+            "properties": [],
+            "definition": "-- File info"
+          },
+          {
+            "name": "file_type",
+            "type": "VARCHAR(10)",
+            "properties": [],
+            "definition": "file_type VARCHAR(10)"
+          },
+          {
+            "name": "file_size",
+            "type": "BIGINT",
+            "properties": [],
+            "definition": "file_size BIGINT"
+          },
+          {
+            "name": "file_hash",
+            "type": "VARCHAR(64)",
+            "properties": [],
+            "definition": "file_hash VARCHAR(64)"
+          },
+          {
+            "name": "--",
+            "type": "Content",
+            "properties": [],
+            "definition": "-- Content stats"
+          },
+          {
+            "name": "word_count",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "word_count INTEGER"
+          },
+          {
+            "name": "page_count",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "page_count INTEGER"
+          },
+          {
+            "name": "estimated_reading_time",
+            "type": "INTEGER,",
+            "properties": [],
+            "definition": "estimated_reading_time INTEGER, -- minutes"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    \n    title TEXT NOT NULL,\n    source TEXT NOT NULL,\n    content TEXT NOT NULL,\n    \n    -- Relationships\n    category_id UUID REFERENCES medical_content_medicalcategory(id) ON DELETE SET NULL,\n    ingestion_status_id INTEGER REFERENCES document_ingestion_status(id) ON DELETE SET NULL,\n    \n    -- Metadata\n    metadata JSONB DEFAULT '{}',\n    \n    -- Structured citation data\n    category VARCHAR(100),\n    document_order INTEGER,\n    priority_weight INTEGER DEFAULT 100,\n    \n    -- File info\n    file_type VARCHAR(10),\n    file_size BIGINT,\n    file_hash VARCHAR(64),\n    \n    -- Content stats\n    word_count INTEGER,\n    page_count INTEGER,\n    estimated_reading_time INTEGER, -- minutes\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "chunks": {
+      "legacy": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "document_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "content",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content TEXT NOT NULL"
+          },
+          {
+            "name": "embedding",
+            "type": "vector(1536)",
+            "properties": [],
+            "definition": "embedding vector(1536)"
+          },
+          {
+            "name": "chunk_index",
+            "type": "INTEGER",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "chunk_index INTEGER NOT NULL"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "token_count",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "token_count INTEGER"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "legacy",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,\n    content TEXT NOT NULL,\n    embedding vector(1536),\n    chunk_index INTEGER NOT NULL,\n    metadata JSONB DEFAULT '{}',\n    token_count INTEGER,\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      },
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "document_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "content",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content TEXT NOT NULL"
+          },
+          {
+            "name": "embedding",
+            "type": "vector(1536),",
+            "properties": [],
+            "definition": "embedding vector(1536), -- OpenAI text-embedding-3-small"
+          },
+          {
+            "name": "--",
+            "type": "Position",
+            "properties": [],
+            "definition": "-- Position info"
+          },
+          {
+            "name": "chunk_index",
+            "type": "INTEGER",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "chunk_index INTEGER NOT NULL"
+          },
+          {
+            "name": "start_page",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "start_page INTEGER"
+          },
+          {
+            "name": "end_page",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "end_page INTEGER"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "token_count",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "token_count INTEGER"
+          },
+          {
+            "name": "--",
+            "type": "Structured",
+            "properties": [],
+            "definition": "-- Structured citation data (denormalized for performance)"
+          },
+          {
+            "name": "category",
+            "type": "VARCHAR(100)",
+            "properties": [],
+            "definition": "category VARCHAR(100)"
+          },
+          {
+            "name": "document_order",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "document_order INTEGER"
+          },
+          {
+            "name": "document_title",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "document_title TEXT"
+          },
+          {
+            "name": "document_source",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "document_source TEXT"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,\n    \n    content TEXT NOT NULL,\n    embedding vector(1536), -- OpenAI text-embedding-3-small\n    \n    -- Position info\n    chunk_index INTEGER NOT NULL,\n    start_page INTEGER,\n    end_page INTEGER,\n    \n    -- Metadata\n    metadata JSONB DEFAULT '{}',\n    token_count INTEGER,\n    \n    -- Structured citation data (denormalized for performance)\n    category VARCHAR(100),\n    document_order INTEGER,\n    document_title TEXT,\n    document_source TEXT,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "sessions": {
+      "legacy": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "user_id",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "user_id TEXT"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "expires_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "expires_at TIMESTAMP WITH TIME ZONE"
+          }
+        ],
+        "schema": "legacy",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    user_id TEXT,\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    expires_at TIMESTAMP WITH TIME ZONE"
+      },
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [],
+            "definition": "tenant_id UUID REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "user_id",
+            "type": "TEXT,",
+            "properties": [],
+            "definition": "user_id TEXT, -- Legacy compatibility"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "expires_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "expires_at TIMESTAMP WITH TIME ZONE"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    user_id TEXT, -- Legacy compatibility\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    expires_at TIMESTAMP WITH TIME ZONE"
+      }
+    },
+    "messages": {
+      "legacy": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "session_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "role",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system'))"
+          },
+          {
+            "name": "content",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content TEXT NOT NULL"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "legacy",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,\n    role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),\n    content TEXT NOT NULL,\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      },
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [],
+            "definition": "tenant_id UUID REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "session_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "role",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system'))"
+          },
+          {
+            "name": "content",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content TEXT NOT NULL"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,\n    role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),\n    content TEXT NOT NULL,\n    metadata JSONB DEFAULT '{}',\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "document_ingestion_status": {
+      "legacy": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "SERIAL",
+            "properties": [
+              "PRIMARY KEY"
+            ],
+            "definition": "id SERIAL PRIMARY KEY"
+          },
+          {
+            "name": "file_path",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "file_path TEXT UNIQUE NOT NULL"
+          },
+          {
+            "name": "file_hash",
+            "type": "VARCHAR(64)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "file_hash VARCHAR(64) NOT NULL,  -- SHA-256 del contenuto"
+          },
+          {
+            "name": "file_size",
+            "type": "BIGINT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "file_size BIGINT NOT NULL"
+          },
+          {
+            "name": "last_modified",
+            "type": "TIMESTAMP",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "last_modified TIMESTAMP WITH TIME ZONE NOT NULL"
+          },
+          {
+            "name": "--",
+            "type": "Stato",
+            "properties": [],
+            "definition": "-- Stato ingestion"
+          },
+          {
+            "name": "status",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed, partial"
+          },
+          {
+            "name": "chunks_created",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "chunks_created INTEGER DEFAULT 0"
+          },
+          {
+            "name": "chunks_expected",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "chunks_expected INTEGER DEFAULT 0"
+          },
+          {
+            "name": "entities_extracted",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "entities_extracted INTEGER DEFAULT 0"
+          },
+          {
+            "name": "graph_episodes_created",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "graph_episodes_created INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Metadati",
+            "properties": [],
+            "definition": "-- Metadati strutturali per citazioni"
+          },
+          {
+            "name": "category",
+            "type": "VARCHAR(100),",
+            "properties": [],
+            "definition": "category VARCHAR(100),  -- caviglia_e_piede, ginocchio, etc."
+          },
+          {
+            "name": "document_order",
+            "type": "INTEGER,",
+            "properties": [],
+            "definition": "document_order INTEGER, -- da nome file (01_, 02_, etc.)"
+          },
+          {
+            "name": "priority_weight",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "priority_weight INTEGER DEFAULT 100, -- per ordinamento citazioni"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "ingestion_started_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "ingestion_started_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "ingestion_completed_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "ingestion_completed_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+          }
+        ],
+        "schema": "legacy",
+        "definition": "id SERIAL PRIMARY KEY,\n    file_path TEXT UNIQUE NOT NULL,\n    file_hash VARCHAR(64) NOT NULL,  -- SHA-256 del contenuto\n    file_size BIGINT NOT NULL,\n    last_modified TIMESTAMP WITH TIME ZONE NOT NULL,\n    \n    -- Stato ingestion\n    status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed, partial\n    chunks_created INTEGER DEFAULT 0,\n    chunks_expected INTEGER DEFAULT 0,\n    entities_extracted INTEGER DEFAULT 0,\n    graph_episodes_created INTEGER DEFAULT 0,\n    \n    -- Metadati strutturali per citazioni\n    category VARCHAR(100),  -- caviglia_e_piede, ginocchio, etc.\n    document_order INTEGER, -- da nome file (01_, 02_, etc.)\n    priority_weight INTEGER DEFAULT 100, -- per ordinamento citazioni\n    \n    -- Timestamps\n    ingestion_started_at TIMESTAMP WITH TIME ZONE,\n    ingestion_completed_at TIMESTAMP WITH TIME ZONE,\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+      },
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "SERIAL",
+            "properties": [
+              "PRIMARY KEY"
+            ],
+            "definition": "id SERIAL PRIMARY KEY"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "file_path",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "file_path TEXT NOT NULL"
+          },
+          {
+            "name": "file_hash",
+            "type": "VARCHAR(64)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "file_hash VARCHAR(64) NOT NULL,  -- SHA-256 del contenuto"
+          },
+          {
+            "name": "file_size",
+            "type": "BIGINT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "file_size BIGINT NOT NULL"
+          },
+          {
+            "name": "last_modified",
+            "type": "TIMESTAMP",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "last_modified TIMESTAMP WITH TIME ZONE NOT NULL"
+          },
+          {
+            "name": "--",
+            "type": "Stato",
+            "properties": [],
+            "definition": "-- Stato ingestion"
+          },
+          {
+            "name": "status",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'partial'))"
+          },
+          {
+            "name": "chunks_created",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "chunks_created INTEGER DEFAULT 0"
+          },
+          {
+            "name": "chunks_expected",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "chunks_expected INTEGER DEFAULT 0"
+          },
+          {
+            "name": "entities_extracted",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "entities_extracted INTEGER DEFAULT 0"
+          },
+          {
+            "name": "graph_episodes_created",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "graph_episodes_created INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Metadati",
+            "properties": [],
+            "definition": "-- Metadati strutturali per citazioni"
+          },
+          {
+            "name": "category",
+            "type": "VARCHAR(100),",
+            "properties": [],
+            "definition": "category VARCHAR(100),  -- caviglia_e_piede, ginocchio, etc."
+          },
+          {
+            "name": "document_order",
+            "type": "INTEGER,",
+            "properties": [],
+            "definition": "document_order INTEGER, -- da nome file (01_, 02_, etc.)"
+          },
+          {
+            "name": "priority_weight",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "priority_weight INTEGER DEFAULT 100, -- per ordinamento citazioni"
+          },
+          {
+            "name": "--",
+            "type": "Error",
+            "properties": [],
+            "definition": "-- Error tracking"
+          },
+          {
+            "name": "error_message",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "error_message TEXT"
+          },
+          {
+            "name": "error_details",
+            "type": "JSONB",
+            "properties": [],
+            "definition": "error_details JSONB"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "ingestion_started_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "ingestion_started_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "ingestion_completed_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "ingestion_completed_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "UNIQUE(tenant_id,",
+            "type": "file_path)",
+            "properties": [],
+            "definition": "UNIQUE(tenant_id, file_path)"
+          }
+        ],
+        "schema": "production",
+        "definition": "id SERIAL PRIMARY KEY,\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    \n    file_path TEXT NOT NULL,\n    file_hash VARCHAR(64) NOT NULL,  -- SHA-256 del contenuto\n    file_size BIGINT NOT NULL,\n    last_modified TIMESTAMP WITH TIME ZONE NOT NULL,\n    \n    -- Stato ingestion\n    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'partial')),\n    chunks_created INTEGER DEFAULT 0,\n    chunks_expected INTEGER DEFAULT 0,\n    entities_extracted INTEGER DEFAULT 0,\n    graph_episodes_created INTEGER DEFAULT 0,\n    \n    -- Metadati strutturali per citazioni\n    category VARCHAR(100),  -- caviglia_e_piede, ginocchio, etc.\n    document_order INTEGER, -- da nome file (01_, 02_, etc.)\n    priority_weight INTEGER DEFAULT 100, -- per ordinamento citazioni\n    \n    -- Error tracking\n    error_message TEXT,\n    error_details JSONB,\n    \n    -- Timestamps\n    ingestion_started_at TIMESTAMP WITH TIME ZONE,\n    ingestion_completed_at TIMESTAMP WITH TIME ZONE,\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    \n    UNIQUE(tenant_id, file_path)"
+      }
+    },
+    "accounts_tenant": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR(100)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "name VARCHAR(100) NOT NULL"
+          },
+          {
+            "name": "slug",
+            "type": "VARCHAR(50)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "slug VARCHAR(50) UNIQUE NOT NULL"
+          },
+          {
+            "name": "--",
+            "type": "Subscription",
+            "properties": [],
+            "definition": "-- Subscription info"
+          },
+          {
+            "name": "plan",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "plan VARCHAR(20) DEFAULT 'free' CHECK (plan IN ('free', 'basic', 'premium', 'enterprise'))"
+          },
+          {
+            "name": "max_users",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "max_users INTEGER DEFAULT 5"
+          },
+          {
+            "name": "max_documents",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "max_documents INTEGER DEFAULT 100"
+          },
+          {
+            "name": "max_storage_mb",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "max_storage_mb INTEGER DEFAULT 1000"
+          },
+          {
+            "name": "--",
+            "type": "Status",
+            "properties": [],
+            "definition": "-- Status"
+          },
+          {
+            "name": "is_active",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_active BOOLEAN DEFAULT true"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "settings",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "settings JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "--",
+            "type": "Billing",
+            "properties": [],
+            "definition": "-- Billing"
+          },
+          {
+            "name": "subscription_expires_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "subscription_expires_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "trial_ends_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "trial_ends_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '14 days')"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    name VARCHAR(100) NOT NULL,\n    slug VARCHAR(50) UNIQUE NOT NULL,\n    \n    -- Subscription info\n    plan VARCHAR(20) DEFAULT 'free' CHECK (plan IN ('free', 'basic', 'premium', 'enterprise')),\n    max_users INTEGER DEFAULT 5,\n    max_documents INTEGER DEFAULT 100,\n    max_storage_mb INTEGER DEFAULT 1000,\n    \n    -- Status\n    is_active BOOLEAN DEFAULT true,\n    \n    -- Metadata\n    metadata JSONB DEFAULT '{}',\n    settings JSONB DEFAULT '{}',\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    \n    -- Billing\n    subscription_expires_at TIMESTAMP WITH TIME ZONE,\n    trial_ends_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '14 days')"
+      }
+    },
+    "auth_user": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "SERIAL",
+            "properties": [
+              "PRIMARY KEY"
+            ],
+            "definition": "id SERIAL PRIMARY KEY"
+          },
+          {
+            "name": "password",
+            "type": "VARCHAR(128)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "password VARCHAR(128) NOT NULL"
+          },
+          {
+            "name": "last_login",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "last_login TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "is_superuser",
+            "type": "BOOLEAN",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "is_superuser BOOLEAN NOT NULL DEFAULT false"
+          },
+          {
+            "name": "username",
+            "type": "VARCHAR(150)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "username VARCHAR(150) UNIQUE NOT NULL"
+          },
+          {
+            "name": "first_name",
+            "type": "VARCHAR(150)",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "first_name VARCHAR(150) NOT NULL DEFAULT ''"
+          },
+          {
+            "name": "last_name",
+            "type": "VARCHAR(150)",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "last_name VARCHAR(150) NOT NULL DEFAULT ''"
+          },
+          {
+            "name": "email",
+            "type": "VARCHAR(254)",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "email VARCHAR(254) NOT NULL DEFAULT ''"
+          },
+          {
+            "name": "is_staff",
+            "type": "BOOLEAN",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "is_staff BOOLEAN NOT NULL DEFAULT false"
+          },
+          {
+            "name": "is_active",
+            "type": "BOOLEAN",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "is_active BOOLEAN NOT NULL DEFAULT true"
+          },
+          {
+            "name": "date_joined",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "date_joined TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id SERIAL PRIMARY KEY,\n    password VARCHAR(128) NOT NULL,\n    last_login TIMESTAMP WITH TIME ZONE,\n    is_superuser BOOLEAN NOT NULL DEFAULT false,\n    username VARCHAR(150) UNIQUE NOT NULL,\n    first_name VARCHAR(150) NOT NULL DEFAULT '',\n    last_name VARCHAR(150) NOT NULL DEFAULT '',\n    email VARCHAR(254) NOT NULL DEFAULT '',\n    is_staff BOOLEAN NOT NULL DEFAULT false,\n    is_active BOOLEAN NOT NULL DEFAULT true,\n    date_joined TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "accounts_user": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "SERIAL",
+            "properties": [
+              "PRIMARY KEY"
+            ],
+            "definition": "id SERIAL PRIMARY KEY"
+          },
+          {
+            "name": "user_ptr_id",
+            "type": "INTEGER",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "user_ptr_id INTEGER UNIQUE NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "--",
+            "type": "Tenant",
+            "properties": [],
+            "definition": "-- Tenant relationship"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "--",
+            "type": "Profile",
+            "properties": [],
+            "definition": "-- Profile info"
+          },
+          {
+            "name": "avatar",
+            "type": "VARCHAR(100)",
+            "properties": [],
+            "definition": "avatar VARCHAR(100)"
+          },
+          {
+            "name": "bio",
+            "type": "TEXT",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "bio TEXT DEFAULT ''"
+          },
+          {
+            "name": "phone",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "phone VARCHAR(20) DEFAULT ''"
+          },
+          {
+            "name": "--",
+            "type": "Role",
+            "properties": [],
+            "definition": "-- Role in tenant"
+          },
+          {
+            "name": "role",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'manager', 'user', 'viewer'))"
+          },
+          {
+            "name": "--",
+            "type": "Preferences",
+            "properties": [],
+            "definition": "-- Preferences"
+          },
+          {
+            "name": "preferences",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "preferences JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "--",
+            "type": "Activity",
+            "properties": [],
+            "definition": "-- Activity tracking"
+          },
+          {
+            "name": "last_activity",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "last_activity TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id SERIAL PRIMARY KEY,\n    user_ptr_id INTEGER UNIQUE NOT NULL REFERENCES auth_user(id) ON DELETE CASCADE,\n    \n    -- Tenant relationship\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    \n    -- Profile info\n    avatar VARCHAR(100),\n    bio TEXT DEFAULT '',\n    phone VARCHAR(20) DEFAULT '',\n    \n    -- Role in tenant\n    role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'manager', 'user', 'viewer')),\n    \n    -- Preferences\n    preferences JSONB DEFAULT '{}',\n    \n    -- Activity tracking\n    last_activity TIMESTAMP WITH TIME ZONE,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "medical_content_medicalcategory": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR(100)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "name VARCHAR(100) NOT NULL"
+          },
+          {
+            "name": "slug",
+            "type": "VARCHAR(100)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "slug VARCHAR(100) NOT NULL"
+          },
+          {
+            "name": "description",
+            "type": "TEXT",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "description TEXT DEFAULT ''"
+          },
+          {
+            "name": "color",
+            "type": "VARCHAR(7)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "color VARCHAR(7) DEFAULT '#007bff', -- Hex color"
+          },
+          {
+            "name": "icon",
+            "type": "VARCHAR(50)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "icon VARCHAR(50) DEFAULT 'folder'"
+          },
+          {
+            "name": "--",
+            "type": "Hierarchy",
+            "properties": [],
+            "definition": "-- Hierarchy"
+          },
+          {
+            "name": "parent_id",
+            "type": "UUID",
+            "properties": [],
+            "definition": "parent_id UUID REFERENCES medical_content_medicalcategory(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "order_index",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "order_index INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Status",
+            "properties": [],
+            "definition": "-- Status"
+          },
+          {
+            "name": "is_active",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_active BOOLEAN DEFAULT true"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "UNIQUE(tenant_id,",
+            "type": "slug)",
+            "properties": [],
+            "definition": "UNIQUE(tenant_id, slug)"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    \n    name VARCHAR(100) NOT NULL,\n    slug VARCHAR(100) NOT NULL,\n    description TEXT DEFAULT '',\n    color VARCHAR(7) DEFAULT '#007bff', -- Hex color\n    icon VARCHAR(50) DEFAULT 'folder',\n    \n    -- Hierarchy\n    parent_id UUID REFERENCES medical_content_medicalcategory(id) ON DELETE CASCADE,\n    order_index INTEGER DEFAULT 0,\n    \n    -- Status\n    is_active BOOLEAN DEFAULT true,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    \n    UNIQUE(tenant_id, slug)"
+      }
+    },
+    "rag_engine_chatsession": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "user_id INTEGER REFERENCES accounts_user(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "title",
+            "type": "VARCHAR(200)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "title VARCHAR(200) DEFAULT 'New Chat'"
+          },
+          {
+            "name": "--",
+            "type": "Session",
+            "properties": [],
+            "definition": "-- Session metadata"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "--",
+            "type": "Status",
+            "properties": [],
+            "definition": "-- Status"
+          },
+          {
+            "name": "is_active",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_active BOOLEAN DEFAULT true"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "expires_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "expires_at TIMESTAMP WITH TIME ZONE"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    user_id INTEGER REFERENCES accounts_user(id) ON DELETE CASCADE,\n    \n    title VARCHAR(200) DEFAULT 'New Chat',\n    \n    -- Session metadata\n    metadata JSONB DEFAULT '{}',\n    \n    -- Status\n    is_active BOOLEAN DEFAULT true,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    expires_at TIMESTAMP WITH TIME ZONE"
+      }
+    },
+    "rag_engine_chatmessage": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "session_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "session_id UUID NOT NULL REFERENCES rag_engine_chatsession(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "role",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system'))"
+          },
+          {
+            "name": "content",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content TEXT NOT NULL"
+          },
+          {
+            "name": "--",
+            "type": "RAG",
+            "properties": [],
+            "definition": "-- RAG specific metadata"
+          },
+          {
+            "name": "sources_used",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "sources_used JSONB DEFAULT '[]', -- Array of document references"
+          },
+          {
+            "name": "tokens_used",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "tokens_used INTEGER DEFAULT 0"
+          },
+          {
+            "name": "response_time_ms",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "response_time_ms INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    session_id UUID NOT NULL REFERENCES rag_engine_chatsession(id) ON DELETE CASCADE,\n    \n    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),\n    content TEXT NOT NULL,\n    \n    -- RAG specific metadata\n    sources_used JSONB DEFAULT '[]', -- Array of document references\n    tokens_used INTEGER DEFAULT 0,\n    response_time_ms INTEGER DEFAULT 0,\n    \n    -- Metadata\n    metadata JSONB DEFAULT '{}',\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "rag_engine_queryanalytics": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "user_id INTEGER REFERENCES accounts_user(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "session_id",
+            "type": "UUID",
+            "properties": [],
+            "definition": "session_id UUID REFERENCES rag_engine_chatsession(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "--",
+            "type": "Query",
+            "properties": [],
+            "definition": "-- Query info"
+          },
+          {
+            "name": "query_text",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "query_text TEXT NOT NULL"
+          },
+          {
+            "name": "query_type",
+            "type": "VARCHAR(50)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "query_type VARCHAR(50) DEFAULT 'chat', -- chat, search, quiz"
+          },
+          {
+            "name": "--",
+            "type": "Performance",
+            "properties": [],
+            "definition": "-- Performance metrics"
+          },
+          {
+            "name": "response_time_ms",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "response_time_ms INTEGER DEFAULT 0"
+          },
+          {
+            "name": "tokens_used",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "tokens_used INTEGER DEFAULT 0"
+          },
+          {
+            "name": "chunks_retrieved",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "chunks_retrieved INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Result",
+            "properties": [],
+            "definition": "-- Result quality"
+          },
+          {
+            "name": "user_rating",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "user_rating INTEGER CHECK (user_rating BETWEEN 1 AND 5)"
+          },
+          {
+            "name": "user_feedback",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "user_feedback TEXT"
+          },
+          {
+            "name": "--",
+            "type": "Sources",
+            "properties": [],
+            "definition": "-- Sources"
+          },
+          {
+            "name": "sources_used",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "sources_used JSONB DEFAULT '[]'"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    user_id INTEGER REFERENCES accounts_user(id) ON DELETE SET NULL,\n    session_id UUID REFERENCES rag_engine_chatsession(id) ON DELETE SET NULL,\n    \n    -- Query info\n    query_text TEXT NOT NULL,\n    query_type VARCHAR(50) DEFAULT 'chat', -- chat, search, quiz\n    \n    -- Performance metrics\n    response_time_ms INTEGER DEFAULT 0,\n    tokens_used INTEGER DEFAULT 0,\n    chunks_retrieved INTEGER DEFAULT 0,\n    \n    -- Result quality\n    user_rating INTEGER CHECK (user_rating BETWEEN 1 AND 5),\n    user_feedback TEXT,\n    \n    -- Sources\n    sources_used JSONB DEFAULT '[]',\n    \n    -- Metadata\n    metadata JSONB DEFAULT '{}',\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "medical_content_quizcategory": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "name",
+            "type": "VARCHAR(100)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "name VARCHAR(100) NOT NULL"
+          },
+          {
+            "name": "slug",
+            "type": "VARCHAR(100)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "slug VARCHAR(100) NOT NULL"
+          },
+          {
+            "name": "description",
+            "type": "TEXT",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "description TEXT DEFAULT ''"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "UNIQUE(tenant_id,",
+            "type": "slug)",
+            "properties": [],
+            "definition": "UNIQUE(tenant_id, slug)"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    \n    name VARCHAR(100) NOT NULL,\n    slug VARCHAR(100) NOT NULL,\n    description TEXT DEFAULT '',\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    \n    UNIQUE(tenant_id, slug)"
+      }
+    },
+    "medical_content_quiz": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "title",
+            "type": "VARCHAR(200)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "title VARCHAR(200) NOT NULL"
+          },
+          {
+            "name": "description",
+            "type": "TEXT",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "description TEXT DEFAULT ''"
+          },
+          {
+            "name": "--",
+            "type": "Relationships",
+            "properties": [],
+            "definition": "-- Relationships"
+          },
+          {
+            "name": "category_id",
+            "type": "UUID",
+            "properties": [],
+            "definition": "category_id UUID REFERENCES medical_content_quizcategory(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "source_documents",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "source_documents JSONB DEFAULT '[]', -- Array of document UUIDs"
+          },
+          {
+            "name": "--",
+            "type": "Quiz",
+            "properties": [],
+            "definition": "-- Quiz settings"
+          },
+          {
+            "name": "difficulty_level",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "difficulty_level VARCHAR(20) DEFAULT 'medium' CHECK (difficulty_level IN ('easy', 'medium', 'hard'))"
+          },
+          {
+            "name": "time_limit_minutes",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "time_limit_minutes INTEGER"
+          },
+          {
+            "name": "passing_score",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "passing_score INTEGER DEFAULT 70"
+          },
+          {
+            "name": "max_attempts",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "max_attempts INTEGER DEFAULT 3"
+          },
+          {
+            "name": "--",
+            "type": "Status",
+            "properties": [],
+            "definition": "-- Status"
+          },
+          {
+            "name": "is_active",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_active BOOLEAN DEFAULT true"
+          },
+          {
+            "name": "is_public",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_public BOOLEAN DEFAULT false"
+          },
+          {
+            "name": "--",
+            "type": "AI",
+            "properties": [],
+            "definition": "-- AI Generation metadata"
+          },
+          {
+            "name": "generated_by_ai",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "generated_by_ai BOOLEAN DEFAULT true"
+          },
+          {
+            "name": "generation_prompt",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "generation_prompt TEXT"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    \n    title VARCHAR(200) NOT NULL,\n    description TEXT DEFAULT '',\n    \n    -- Relationships\n    category_id UUID REFERENCES medical_content_quizcategory(id) ON DELETE SET NULL,\n    source_documents JSONB DEFAULT '[]', -- Array of document UUIDs\n    \n    -- Quiz settings\n    difficulty_level VARCHAR(20) DEFAULT 'medium' CHECK (difficulty_level IN ('easy', 'medium', 'hard')),\n    time_limit_minutes INTEGER,\n    passing_score INTEGER DEFAULT 70,\n    max_attempts INTEGER DEFAULT 3,\n    \n    -- Status\n    is_active BOOLEAN DEFAULT true,\n    is_public BOOLEAN DEFAULT false,\n    \n    -- AI Generation metadata\n    generated_by_ai BOOLEAN DEFAULT true,\n    generation_prompt TEXT,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "medical_content_quizquestion": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "quiz_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "quiz_id UUID NOT NULL REFERENCES medical_content_quiz(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "question_text",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "question_text TEXT NOT NULL"
+          },
+          {
+            "name": "question_type",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "question_type VARCHAR(20) DEFAULT 'multiple_choice' CHECK (question_type IN ('multiple_choice', 'true_false', 'case_study', 'open_ended'))"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata"
+          },
+          {
+            "name": "explanation",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "explanation TEXT"
+          },
+          {
+            "name": "difficulty",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "difficulty INTEGER DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 5)"
+          },
+          {
+            "name": "points",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "points INTEGER DEFAULT 1"
+          },
+          {
+            "name": "order_index",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "order_index INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Source",
+            "properties": [],
+            "definition": "-- Source tracking"
+          },
+          {
+            "name": "source_chunk_ids",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "source_chunk_ids JSONB DEFAULT '[]'"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    quiz_id UUID NOT NULL REFERENCES medical_content_quiz(id) ON DELETE CASCADE,\n    \n    question_text TEXT NOT NULL,\n    question_type VARCHAR(20) DEFAULT 'multiple_choice' CHECK (question_type IN ('multiple_choice', 'true_false', 'case_study', 'open_ended')),\n    \n    -- Metadata\n    explanation TEXT,\n    difficulty INTEGER DEFAULT 1 CHECK (difficulty BETWEEN 1 AND 5),\n    points INTEGER DEFAULT 1,\n    order_index INTEGER DEFAULT 0,\n    \n    -- Source tracking\n    source_chunk_ids JSONB DEFAULT '[]',\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "medical_content_quizanswer": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "question_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "question_id UUID NOT NULL REFERENCES medical_content_quizquestion(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "answer_text",
+            "type": "TEXT",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "answer_text TEXT NOT NULL"
+          },
+          {
+            "name": "is_correct",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_correct BOOLEAN DEFAULT false"
+          },
+          {
+            "name": "order_index",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "order_index INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Explanation",
+            "properties": [],
+            "definition": "-- Explanation for this specific answer"
+          },
+          {
+            "name": "explanation",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "explanation TEXT"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    question_id UUID NOT NULL REFERENCES medical_content_quizquestion(id) ON DELETE CASCADE,\n    \n    answer_text TEXT NOT NULL,\n    is_correct BOOLEAN DEFAULT false,\n    order_index INTEGER DEFAULT 0,\n    \n    -- Explanation for this specific answer\n    explanation TEXT,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "medical_content_quizattempt": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "quiz_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "quiz_id UUID NOT NULL REFERENCES medical_content_quiz(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "user_id INTEGER NOT NULL REFERENCES accounts_user(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "--",
+            "type": "Attempt",
+            "properties": [],
+            "definition": "-- Attempt info"
+          },
+          {
+            "name": "attempt_number",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "attempt_number INTEGER DEFAULT 1"
+          },
+          {
+            "name": "--",
+            "type": "Results",
+            "properties": [],
+            "definition": "-- Results"
+          },
+          {
+            "name": "score",
+            "type": "DECIMAL(5,2),",
+            "properties": [],
+            "definition": "score DECIMAL(5,2), -- Percentage score"
+          },
+          {
+            "name": "total_questions",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "total_questions INTEGER"
+          },
+          {
+            "name": "correct_answers",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "correct_answers INTEGER"
+          },
+          {
+            "name": "--",
+            "type": "Timing",
+            "properties": [],
+            "definition": "-- Timing"
+          },
+          {
+            "name": "time_taken_seconds",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "time_taken_seconds INTEGER"
+          },
+          {
+            "name": "started_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "completed_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "completed_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "--",
+            "type": "Status",
+            "properties": [],
+            "definition": "-- Status"
+          },
+          {
+            "name": "is_completed",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_completed BOOLEAN DEFAULT false"
+          },
+          {
+            "name": "passed",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "passed BOOLEAN DEFAULT false"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "metadata JSONB DEFAULT '{}'"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    quiz_id UUID NOT NULL REFERENCES medical_content_quiz(id) ON DELETE CASCADE,\n    user_id INTEGER NOT NULL REFERENCES accounts_user(id) ON DELETE CASCADE,\n    \n    -- Attempt info\n    attempt_number INTEGER DEFAULT 1,\n    \n    -- Results\n    score DECIMAL(5,2), -- Percentage score\n    total_questions INTEGER,\n    correct_answers INTEGER,\n    \n    -- Timing\n    time_taken_seconds INTEGER,\n    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    completed_at TIMESTAMP WITH TIME ZONE,\n    \n    -- Status\n    is_completed BOOLEAN DEFAULT false,\n    passed BOOLEAN DEFAULT false,\n    \n    -- Metadata\n    metadata JSONB DEFAULT '{}'"
+      }
+    },
+    "medical_content_quizresponse": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "attempt_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "attempt_id UUID NOT NULL REFERENCES medical_content_quizattempt(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "question_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "question_id UUID NOT NULL REFERENCES medical_content_quizquestion(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "answer_id",
+            "type": "UUID",
+            "properties": [],
+            "definition": "answer_id UUID REFERENCES medical_content_quizanswer(id) ON DELETE SET NULL"
+          },
+          {
+            "name": "--",
+            "type": "Response",
+            "properties": [],
+            "definition": "-- Response data"
+          },
+          {
+            "name": "response_text",
+            "type": "TEXT,",
+            "properties": [],
+            "definition": "response_text TEXT, -- For open-ended questions"
+          },
+          {
+            "name": "is_correct",
+            "type": "BOOLEAN",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "is_correct BOOLEAN DEFAULT false"
+          },
+          {
+            "name": "points_earned",
+            "type": "DECIMAL(5,2)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "points_earned DECIMAL(5,2) DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Timing",
+            "properties": [],
+            "definition": "-- Timing"
+          },
+          {
+            "name": "time_taken_seconds",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "time_taken_seconds INTEGER"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    attempt_id UUID NOT NULL REFERENCES medical_content_quizattempt(id) ON DELETE CASCADE,\n    question_id UUID NOT NULL REFERENCES medical_content_quizquestion(id) ON DELETE CASCADE,\n    answer_id UUID REFERENCES medical_content_quizanswer(id) ON DELETE SET NULL,\n    \n    -- Response data\n    response_text TEXT, -- For open-ended questions\n    is_correct BOOLEAN DEFAULT false,\n    points_earned DECIMAL(5,2) DEFAULT 0,\n    \n    -- Timing\n    time_taken_seconds INTEGER,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      }
+    },
+    "medical_content_quizanalytics": {
+      "production": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "UUID",
+            "properties": [
+              "DEFAULT",
+              "PRIMARY KEY"
+            ],
+            "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()"
+          },
+          {
+            "name": "tenant_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "quiz_id",
+            "type": "UUID",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "quiz_id UUID NOT NULL REFERENCES medical_content_quiz(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "--",
+            "type": "Analytics",
+            "properties": [],
+            "definition": "-- Analytics data"
+          },
+          {
+            "name": "total_attempts",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "total_attempts INTEGER DEFAULT 0"
+          },
+          {
+            "name": "total_completions",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "total_completions INTEGER DEFAULT 0"
+          },
+          {
+            "name": "average_score",
+            "type": "DECIMAL(5,2)",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "average_score DECIMAL(5,2) DEFAULT 0"
+          },
+          {
+            "name": "average_time_seconds",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "average_time_seconds INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Question-level",
+            "properties": [],
+            "definition": "-- Question-level analytics"
+          },
+          {
+            "name": "question_analytics",
+            "type": "JSONB",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "question_analytics JSONB DEFAULT '{}', -- Per-question statistics"
+          },
+          {
+            "name": "--",
+            "type": "Date",
+            "properties": [],
+            "definition": "-- Date range"
+          },
+          {
+            "name": "analytics_date",
+            "type": "DATE",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "analytics_date DATE DEFAULT CURRENT_DATE"
+          },
+          {
+            "name": "--",
+            "type": "Timestamps",
+            "properties": [],
+            "definition": "-- Timestamps"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+          },
+          {
+            "name": "UNIQUE(tenant_id,",
+            "type": "quiz_id,",
+            "properties": [],
+            "definition": "UNIQUE(tenant_id, quiz_id, analytics_date)"
+          }
+        ],
+        "schema": "production",
+        "definition": "id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n    tenant_id UUID NOT NULL REFERENCES accounts_tenant(id) ON DELETE CASCADE,\n    quiz_id UUID NOT NULL REFERENCES medical_content_quiz(id) ON DELETE CASCADE,\n    \n    -- Analytics data\n    total_attempts INTEGER DEFAULT 0,\n    total_completions INTEGER DEFAULT 0,\n    average_score DECIMAL(5,2) DEFAULT 0,\n    average_time_seconds INTEGER DEFAULT 0,\n    \n    -- Question-level analytics\n    question_analytics JSONB DEFAULT '{}', -- Per-question statistics\n    \n    -- Date range\n    analytics_date DATE DEFAULT CURRENT_DATE,\n    \n    -- Timestamps\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,\n    \n    UNIQUE(tenant_id, quiz_id, analytics_date)"
+      }
+    },
+    "document_sections": {
+      "extension": {
+        "columns": [
+          {
+            "name": "id",
+            "type": "SERIAL",
+            "properties": [
+              "PRIMARY KEY"
+            ],
+            "definition": "id SERIAL PRIMARY KEY"
+          },
+          {
+            "name": "document_status_id",
+            "type": "INTEGER",
+            "properties": [],
+            "definition": "document_status_id INTEGER REFERENCES document_ingestion_status(id) ON DELETE CASCADE"
+          },
+          {
+            "name": "--",
+            "type": "Identificazione",
+            "properties": [],
+            "definition": "-- Identificazione sezione"
+          },
+          {
+            "name": "section_position",
+            "type": "INTEGER",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "section_position INTEGER NOT NULL"
+          },
+          {
+            "name": "section_type",
+            "type": "VARCHAR(50)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "section_type VARCHAR(50) NOT NULL,  -- paragraph, table, heading, etc."
+          },
+          {
+            "name": "section_hash",
+            "type": "VARCHAR(64)",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "section_hash VARCHAR(64) NOT NULL,  -- Hash contenuto sezione"
+          },
+          {
+            "name": "--",
+            "type": "Metadati",
+            "properties": [],
+            "definition": "-- Metadati sezione"
+          },
+          {
+            "name": "content_length",
+            "type": "INTEGER",
+            "properties": [
+              "NOT NULL"
+            ],
+            "definition": "content_length INTEGER NOT NULL"
+          },
+          {
+            "name": "content_preview",
+            "type": "TEXT,",
+            "properties": [],
+            "definition": "content_preview TEXT,  -- Prime 200 char per debugging"
+          },
+          {
+            "name": "--",
+            "type": "Status",
+            "properties": [],
+            "definition": "-- Status tracking"
+          },
+          {
+            "name": "status",
+            "type": "VARCHAR(20)",
+            "properties": [
+              "NOT NULL",
+              "DEFAULT"
+            ],
+            "definition": "status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed"
+          },
+          {
+            "name": "error_message",
+            "type": "TEXT",
+            "properties": [],
+            "definition": "error_message TEXT"
+          },
+          {
+            "name": "--",
+            "type": "Processing",
+            "properties": [],
+            "definition": "-- Processing info"
+          },
+          {
+            "name": "chunks_created",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "chunks_created INTEGER DEFAULT 0"
+          },
+          {
+            "name": "entities_extracted",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "entities_extracted INTEGER DEFAULT 0"
+          },
+          {
+            "name": "graph_episodes_created",
+            "type": "INTEGER",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "graph_episodes_created INTEGER DEFAULT 0"
+          },
+          {
+            "name": "--",
+            "type": "Timing",
+            "properties": [],
+            "definition": "-- Timing"
+          },
+          {
+            "name": "processing_started_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "processing_started_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "processing_completed_at",
+            "type": "TIMESTAMP",
+            "properties": [],
+            "definition": "processing_completed_at TIMESTAMP WITH TIME ZONE"
+          },
+          {
+            "name": "--",
+            "type": "Metadata",
+            "properties": [],
+            "definition": "-- Metadata JSON per estensibilità"
+          },
+          {
+            "name": "metadata",
+            "type": "JSONB",
+            "properties": [],
+            "definition": "metadata JSONB"
+          },
+          {
+            "name": "created_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+          },
+          {
+            "name": "updated_at",
+            "type": "TIMESTAMP",
+            "properties": [
+              "DEFAULT"
+            ],
+            "definition": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+          },
+          {
+            "name": "--",
+            "type": "Indici",
+            "properties": [],
+            "definition": "-- Indici per performance"
+          }
+        ],
+        "schema": "extension",
+        "definition": "id SERIAL PRIMARY KEY,\n    document_status_id INTEGER REFERENCES document_ingestion_status(id) ON DELETE CASCADE,\n    \n    -- Identificazione sezione\n    section_position INTEGER NOT NULL,\n    section_type VARCHAR(50) NOT NULL,  -- paragraph, table, heading, etc.\n    section_hash VARCHAR(64) NOT NULL,  -- Hash contenuto sezione\n    \n    -- Metadati sezione\n    content_length INTEGER NOT NULL,\n    content_preview TEXT,  -- Prime 200 char per debugging\n    \n    -- Status tracking\n    status VARCHAR(20) NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed\n    error_message TEXT,\n    \n    -- Processing info\n    chunks_created INTEGER DEFAULT 0,\n    entities_extracted INTEGER DEFAULT 0,\n    graph_episodes_created INTEGER DEFAULT 0,\n    \n    -- Timing\n    processing_started_at TIMESTAMP WITH TIME ZONE,\n    processing_completed_at TIMESTAMP WITH TIME ZONE,\n    \n    -- Metadata JSON per estensibilità\n    metadata JSONB,\n    \n    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),\n    \n    -- Indici per performance\n    CONSTRAINT unique_document_section UNIQUE (document_status_id, section_position)"
+      }
+    }
+  },
+  "functions": {
+    "match_chunks": {
+      "legacy": {
+        "parameters": "query_embedding vector(1536",
+        "body": ",\n    match_count INT DEFAULT 10\n)\nRETURNS TABLE (\n    chunk_id UUID,\n    document_id UUID,\n    content TEXT,\n    similarity FLOAT,\n    metadata JSONB,\n    document_title TEXT,\n    document_source TEXT\n)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n    RETURN QUERY\n    SELECT \n        c.id AS chunk_id,\n        c.document_id,\n        c.content,\n        1 - (c.embedding <=> query_embedding) AS similarity,\n        c.metadata,\n        d.title AS document_title,\n        d.source AS document_source\n    FROM chunks c\n    JOIN documents d ON c.document_id = d.id\n    WHERE c.embedding IS NOT NULL\n    ORDER BY c.embedding <=> query_embedding\n    LIMIT match_count;\nEND;\n$$;",
+        "schema": "legacy"
+      },
+      "production": {
+        "parameters": "p_tenant_id UUID,\n    query_embedding vector(1536",
+        "body": ",\n    match_count INT DEFAULT 10\n)\nRETURNS TABLE (\n    chunk_id UUID,\n    document_id UUID,\n    content TEXT,\n    similarity FLOAT,\n    metadata JSONB,\n    document_title TEXT,\n    document_source TEXT,\n    category VARCHAR,\n    document_order INTEGER\n)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n    RETURN QUERY\n    SELECT \n        c.id AS chunk_id,\n        c.document_id,\n        c.content,\n        1 - (c.embedding <=> query_embedding) AS similarity,\n        c.metadata,\n        d.title AS document_title,\n        d.source AS document_source,\n        c.category,\n        c.document_order\n    FROM chunks c\n    JOIN documents d ON c.document_id = d.id\n    WHERE c.tenant_id = p_tenant_id \n      AND d.tenant_id = p_tenant_id\n      AND c.embedding IS NOT NULL\n    ORDER BY c.embedding <=> query_embedding\n    LIMIT match_count;\nEND;\n$$;",
+        "schema": "production"
+      }
+    },
+    "hybrid_search": {
+      "legacy": {
+        "parameters": "query_embedding vector(1536",
+        "body": ",\n    query_text TEXT,\n    match_count INT DEFAULT 10,\n    text_weight FLOAT DEFAULT 0.3\n)\nRETURNS TABLE (\n    chunk_id UUID,\n    document_id UUID,\n    content TEXT,\n    combined_score FLOAT,\n    vector_similarity FLOAT,\n    text_similarity FLOAT,\n    metadata JSONB,\n    document_title TEXT,\n    document_source TEXT\n)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n    RETURN QUERY\n    WITH vector_results AS (\n        SELECT \n            c.id AS chunk_id,\n            c.document_id,\n            c.content,\n            1 - (c.embedding <=> query_embedding) AS vector_sim,\n            c.metadata,\n            d.title AS doc_title,\n            d.source AS doc_source\n        FROM chunks c\n        JOIN documents d ON c.document_id = d.id\n        WHERE c.embedding IS NOT NULL\n    ),\n    text_results AS (\n        SELECT \n            c.id AS chunk_id,\n            c.document_id,\n            c.content,\n            ts_rank_cd(to_tsvector('english', c.content), plainto_tsquery('english', query_text)) AS text_sim,\n            c.metadata,\n            d.title AS doc_title,\n            d.source AS doc_source\n        FROM chunks c\n        JOIN documents d ON c.document_id = d.id\n        WHERE to_tsvector('english', c.content) @@ plainto_tsquery('english', query_text)\n    )\n    SELECT \n        COALESCE(v.chunk_id, t.chunk_id) AS chunk_id,\n        COALESCE(v.document_id, t.document_id) AS document_id,\n        COALESCE(v.content, t.content) AS content,\n        (COALESCE(v.vector_sim, 0) * (1 - text_weight) + COALESCE(t.text_sim, 0) * text_weight) AS combined_score,\n        COALESCE(v.vector_sim, 0) AS vector_similarity,\n        COALESCE(t.text_sim, 0) AS text_similarity,\n        COALESCE(v.metadata, t.metadata) AS metadata,\n        COALESCE(v.doc_title, t.doc_title) AS document_title,\n        COALESCE(v.doc_source, t.doc_source) AS document_source\n    FROM vector_results v\n    FULL OUTER JOIN text_results t ON v.chunk_id = t.chunk_id\n    ORDER BY combined_score DESC\n    LIMIT match_count;\nEND;\n$$;",
+        "schema": "legacy"
+      },
+      "production": {
+        "parameters": "p_tenant_id UUID,\n    query_embedding vector(1536",
+        "body": ",\n    query_text TEXT,\n    match_count INT DEFAULT 10,\n    text_weight FLOAT DEFAULT 0.3\n)\nRETURNS TABLE (\n    chunk_id UUID,\n    document_id UUID,\n    content TEXT,\n    combined_score FLOAT,\n    vector_similarity FLOAT,\n    text_similarity FLOAT,\n    metadata JSONB,\n    document_title TEXT,\n    document_source TEXT,\n    category VARCHAR,\n    document_order INTEGER\n)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n    RETURN QUERY\n    WITH vector_results AS (\n        SELECT \n            c.id AS chunk_id,\n            c.document_id,\n            c.content,\n            (1 - (c.embedding <=> query_embedding))::double precision AS vector_sim,\n            c.metadata,\n            d.title AS doc_title,\n            d.source AS doc_source,\n            c.category,\n            c.document_order\n        FROM chunks c\n        JOIN documents d ON c.document_id = d.id\n        WHERE c.tenant_id = p_tenant_id \n          AND d.tenant_id = p_tenant_id\n          AND c.embedding IS NOT NULL\n    ),\n    text_results AS (\n        SELECT \n            c.id AS chunk_id,\n            c.document_id,\n            c.content,\n            ts_rank_cd(to_tsvector('italian', c.content), plainto_tsquery('italian', query_text))::double precision AS text_sim,\n            c.metadata,\n            d.title AS doc_title,\n            d.source AS doc_source,\n            c.category,\n            c.document_order\n        FROM chunks c\n        JOIN documents d ON c.document_id = d.id\n        WHERE c.tenant_id = p_tenant_id \n          AND d.tenant_id = p_tenant_id\n          AND to_tsvector('italian', c.content) @@ plainto_tsquery('italian', query_text)\n    )\n    SELECT \n        COALESCE(v.chunk_id, t.chunk_id) AS chunk_id,\n        COALESCE(v.document_id, t.document_id) AS document_id,\n        COALESCE(v.content, t.content) AS content,\n        (COALESCE(v.vector_sim, 0.0) * (1 - text_weight) + COALESCE(t.text_sim, 0.0) * text_weight) AS combined_score,\n        COALESCE(v.vector_sim, 0.0) AS vector_similarity,\n        COALESCE(t.text_sim, 0.0) AS text_similarity,\n        COALESCE(v.metadata, t.metadata) AS metadata,\n        COALESCE(v.doc_title, t.doc_title) AS document_title,\n        COALESCE(v.doc_source, t.doc_source) AS document_source,\n        COALESCE(v.category, t.category) AS category,\n        COALESCE(v.document_order, t.document_order) AS document_order\n    FROM vector_results v\n    FULL OUTER JOIN text_results t ON v.chunk_id = t.chunk_id\n    ORDER BY combined_score DESC\n    LIMIT match_count;\nEND;\n$$;",
+        "schema": "production"
+      }
+    },
+    "get_document_chunks": {
+      "legacy": {
+        "parameters": "doc_id UUID",
+        "body": "RETURNS TABLE (\n    chunk_id UUID,\n    content TEXT,\n    chunk_index INTEGER,\n    metadata JSONB\n)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n    RETURN QUERY\n    SELECT \n        id AS chunk_id,\n        chunks.content,\n        chunks.chunk_index,\n        chunks.metadata\n    FROM chunks\n    WHERE document_id = doc_id\n    ORDER BY chunk_index;\nEND;\n$$;",
+        "schema": "legacy"
+      },
+      "production": {
+        "parameters": "p_tenant_id UUID,\n    doc_id UUID",
+        "body": "RETURNS TABLE (\n    chunk_id UUID,\n    content TEXT,\n    chunk_index INTEGER,\n    metadata JSONB\n)\nLANGUAGE plpgsql\nAS $$\nBEGIN\n    RETURN QUERY\n    SELECT \n        id AS chunk_id,\n        chunks.content,\n        chunks.chunk_index,\n        chunks.metadata\n    FROM chunks\n    WHERE tenant_id = p_tenant_id \n      AND document_id = doc_id\n    ORDER BY chunk_index;\nEND;\n$$;\n\n-- =====================================================\n-- VIEWS\n-- =====================================================",
+        "schema": "production"
+      }
+    },
+    "update_updated_at_column": {
+      "legacy": {
+        "parameters": "",
+        "body": "RETURNS TRIGGER AS $$\nBEGIN\n    NEW.updated_at = CURRENT_TIMESTAMP;\n    RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;",
+        "schema": "legacy"
+      },
+      "production": {
+        "parameters": "",
+        "body": "RETURNS TRIGGER AS $$\nBEGIN\n    NEW.updated_at = CURRENT_TIMESTAMP;\n    RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\n-- =====================================================\n-- MULTI-TENANCY CORE\n-- =====================================================",
+        "schema": "production"
+      }
+    },
+    "cleanup_failed_sections": {
+      "extension": {
+        "parameters": "p_document_status_id INTEGER",
+        "body": "RETURNS INTEGER AS $$\nDECLARE\n    sections_cleaned INTEGER := 0;\nBEGIN\n    -- Rimuovi chunks delle sezioni fallite\n    DELETE FROM chunks \n    WHERE document_id IN (\n        SELECT d.id \n        FROM documents d\n        JOIN document_ingestion_status dis ON d.source = dis.file_path\n        WHERE dis.id = p_document_status_id\n    )\n    AND id IN (\n        SELECT chunk_id \n        FROM document_sections ds\n        WHERE ds.document_status_id = p_document_status_id \n        AND ds.status = 'failed'\n    );\n    \n    -- Reset status sezioni fallite\n    UPDATE document_sections \n    SET status = 'pending',\n        error_message = NULL,\n        processing_started_at = NULL,\n        processing_completed_at = NULL,\n        chunks_",
+        "schema": "extension"
+      }
+    },
+    "update_document_sections_timestamp": {
+      "extension": {
+        "parameters": "",
+        "body": "RETURNS TRIGGER AS $$\nBEGIN\n    NEW.updated_at = NOW();\n    RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;",
+        "schema": "extension"
+      }
+    }
+  },
+  "indexes": {
+    "idx_documents_created_at": {
+      "legacy": {
+        "table": "documents",
+        "columns": "created_at DESC",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "documents",
+        "columns": "created_at DESC",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chunks_document_id": {
+      "legacy": {
+        "table": "chunks",
+        "columns": "document_id",
+        "options": "",
+        "schema": "legacy"
+      }
+    },
+    "idx_chunks_chunk_index": {
+      "legacy": {
+        "table": "chunks",
+        "columns": "document_id, chunk_index",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "chunks",
+        "columns": "document_id, chunk_index",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_sessions_user_id": {
+      "legacy": {
+        "table": "sessions",
+        "columns": "user_id",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "sessions",
+        "columns": "user_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_sessions_expires_at": {
+      "legacy": {
+        "table": "sessions",
+        "columns": "expires_at",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "sessions",
+        "columns": "expires_at",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_messages_session_id": {
+      "legacy": {
+        "table": "messages",
+        "columns": "session_id, created_at",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "messages",
+        "columns": "session_id, created_at",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_ingestion_file_path": {
+      "legacy": {
+        "table": "document_ingestion_status",
+        "columns": "file_path",
+        "options": "",
+        "schema": "legacy"
+      }
+    },
+    "idx_ingestion_status": {
+      "legacy": {
+        "table": "document_ingestion_status",
+        "columns": "status",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "document_ingestion_status",
+        "columns": "status",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_ingestion_category_order": {
+      "legacy": {
+        "table": "document_ingestion_status",
+        "columns": "category, document_order",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "document_ingestion_status",
+        "columns": "category, document_order",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_ingestion_hash": {
+      "legacy": {
+        "table": "document_ingestion_status",
+        "columns": "file_hash",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "document_ingestion_status",
+        "columns": "file_hash",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_documents_category_order": {
+      "legacy": {
+        "table": "documents",
+        "columns": "category, document_order",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "documents",
+        "columns": "category, document_order",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chunks_category_order": {
+      "legacy": {
+        "table": "chunks",
+        "columns": "category, document_order",
+        "options": "",
+        "schema": "legacy"
+      },
+      "production": {
+        "table": "chunks",
+        "columns": "category, document_order",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_tenant_slug": {
+      "production": {
+        "table": "accounts_tenant",
+        "columns": "slug",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_tenant_active": {
+      "production": {
+        "table": "accounts_tenant",
+        "columns": "is_active",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_tenant_plan": {
+      "production": {
+        "table": "accounts_tenant",
+        "columns": "plan",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_auth_user_username": {
+      "production": {
+        "table": "auth_user",
+        "columns": "username",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_auth_user_email": {
+      "production": {
+        "table": "auth_user",
+        "columns": "email",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_user_tenant": {
+      "production": {
+        "table": "accounts_user",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_user_role": {
+      "production": {
+        "table": "accounts_user",
+        "columns": "role",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_user_active": {
+      "production": {
+        "table": "accounts_user",
+        "columns": "last_activity",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_medical_category_tenant": {
+      "production": {
+        "table": "medical_content_medicalcategory",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_medical_category_parent": {
+      "production": {
+        "table": "medical_content_medicalcategory",
+        "columns": "parent_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_medical_category_active": {
+      "production": {
+        "table": "medical_content_medicalcategory",
+        "columns": "is_active",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_ingestion_tenant": {
+      "production": {
+        "table": "document_ingestion_status",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_documents_tenant": {
+      "production": {
+        "table": "documents",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_documents_category": {
+      "production": {
+        "table": "documents",
+        "columns": "category_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_documents_file_hash": {
+      "production": {
+        "table": "documents",
+        "columns": "file_hash",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chunks_tenant": {
+      "production": {
+        "table": "chunks",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chunks_document": {
+      "production": {
+        "table": "chunks",
+        "columns": "document_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chat_session_tenant": {
+      "production": {
+        "table": "rag_engine_chatsession",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chat_session_user": {
+      "production": {
+        "table": "rag_engine_chatsession",
+        "columns": "user_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chat_session_active": {
+      "production": {
+        "table": "rag_engine_chatsession",
+        "columns": "is_active",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chat_session_expires": {
+      "production": {
+        "table": "rag_engine_chatsession",
+        "columns": "expires_at",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chat_message_tenant": {
+      "production": {
+        "table": "rag_engine_chatmessage",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chat_message_session": {
+      "production": {
+        "table": "rag_engine_chatmessage",
+        "columns": "session_id, created_at",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_chat_message_role": {
+      "production": {
+        "table": "rag_engine_chatmessage",
+        "columns": "role",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_query_analytics_tenant": {
+      "production": {
+        "table": "rag_engine_queryanalytics",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_query_analytics_user": {
+      "production": {
+        "table": "rag_engine_queryanalytics",
+        "columns": "user_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_query_analytics_type": {
+      "production": {
+        "table": "rag_engine_queryanalytics",
+        "columns": "query_type",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_query_analytics_created": {
+      "production": {
+        "table": "rag_engine_queryanalytics",
+        "columns": "created_at",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_category_tenant": {
+      "production": {
+        "table": "medical_content_quizcategory",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_tenant": {
+      "production": {
+        "table": "medical_content_quiz",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_category": {
+      "production": {
+        "table": "medical_content_quiz",
+        "columns": "category_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_active": {
+      "production": {
+        "table": "medical_content_quiz",
+        "columns": "is_active",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_public": {
+      "production": {
+        "table": "medical_content_quiz",
+        "columns": "is_public",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_question_tenant": {
+      "production": {
+        "table": "medical_content_quizquestion",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_question_quiz": {
+      "production": {
+        "table": "medical_content_quizquestion",
+        "columns": "quiz_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_question_type": {
+      "production": {
+        "table": "medical_content_quizquestion",
+        "columns": "question_type",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_answer_tenant": {
+      "production": {
+        "table": "medical_content_quizanswer",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_answer_question": {
+      "production": {
+        "table": "medical_content_quizanswer",
+        "columns": "question_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_answer_correct": {
+      "production": {
+        "table": "medical_content_quizanswer",
+        "columns": "is_correct",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_attempt_tenant": {
+      "production": {
+        "table": "medical_content_quizattempt",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_attempt_quiz": {
+      "production": {
+        "table": "medical_content_quizattempt",
+        "columns": "quiz_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_attempt_user": {
+      "production": {
+        "table": "medical_content_quizattempt",
+        "columns": "user_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_attempt_completed": {
+      "production": {
+        "table": "medical_content_quizattempt",
+        "columns": "is_completed",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_response_tenant": {
+      "production": {
+        "table": "medical_content_quizresponse",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_response_attempt": {
+      "production": {
+        "table": "medical_content_quizresponse",
+        "columns": "attempt_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_response_question": {
+      "production": {
+        "table": "medical_content_quizresponse",
+        "columns": "question_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_analytics_tenant": {
+      "production": {
+        "table": "medical_content_quizanalytics",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_analytics_quiz": {
+      "production": {
+        "table": "medical_content_quizanalytics",
+        "columns": "quiz_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_quiz_analytics_date": {
+      "production": {
+        "table": "medical_content_quizanalytics",
+        "columns": "analytics_date",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_sessions_tenant": {
+      "production": {
+        "table": "sessions",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_messages_tenant": {
+      "production": {
+        "table": "messages",
+        "columns": "tenant_id",
+        "options": "",
+        "schema": "production"
+      }
+    },
+    "idx_document_sections_status": {
+      "extension": {
+        "table": "document_sections",
+        "columns": "document_status_id, status",
+        "options": "",
+        "schema": "extension"
+      }
+    },
+    "idx_document_sections_position": {
+      "extension": {
+        "table": "document_sections",
+        "columns": "document_status_id, section_position",
+        "options": "",
+        "schema": "extension"
+      }
+    },
+    "idx_document_sections_failed": {
+      "extension": {
+        "table": "document_sections",
+        "columns": "status",
+        "options": "",
+        "schema": "extension"
+      }
+    }
+  },
+  "extensions": {
+    "legacy": [
+      "pg_trgm",
+      "vector",
+      "uuid-ossp"
+    ],
+    "production": [
+      "pg_trgm",
+      "vector",
+      "btree_gin",
+      "uuid-ossp"
+    ],
+    "extension": []
+  },
+  "analysis": {
+    "table_overlaps": {
+      "documents": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "differences": [
+          "Columns in production but not legacy: estimated_reading_time, file_type, document_order, --, category, priority_weight, file_size, word_count, file_hash, page_count, category_id, tenant_id, ingestion_status_id"
+        ]
+      },
+      "chunks": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "differences": [
+          "Columns in production but not legacy: start_page, document_order, category, --, end_page, tenant_id, document_source, document_title",
+          "Column embedding: type vector(1536) in legacy vs vector(1536), in production"
+        ]
+      },
+      "sessions": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "differences": [
+          "Columns in production but not legacy: tenant_id",
+          "Column user_id: type TEXT in legacy vs TEXT, in production"
+        ]
+      },
+      "messages": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "differences": [
+          "Columns in production but not legacy: tenant_id"
+        ]
+      },
+      "document_ingestion_status": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "differences": [
+          "Columns in production but not legacy: error_details, tenant_id, error_message, UNIQUE(tenant_id,"
+        ]
+      }
+    },
+    "missing_tables": {
+      "accounts_tenant": [
+        "Only in production"
+      ],
+      "auth_user": [
+        "Only in production"
+      ],
+      "accounts_user": [
+        "Only in production"
+      ],
+      "medical_content_medicalcategory": [
+        "Only in production"
+      ],
+      "rag_engine_chatsession": [
+        "Only in production"
+      ],
+      "rag_engine_chatmessage": [
+        "Only in production"
+      ],
+      "rag_engine_queryanalytics": [
+        "Only in production"
+      ],
+      "medical_content_quizcategory": [
+        "Only in production"
+      ],
+      "medical_content_quiz": [
+        "Only in production"
+      ],
+      "medical_content_quizquestion": [
+        "Only in production"
+      ],
+      "medical_content_quizanswer": [
+        "Only in production"
+      ],
+      "medical_content_quizattempt": [
+        "Only in production"
+      ],
+      "medical_content_quizresponse": [
+        "Only in production"
+      ],
+      "medical_content_quizanalytics": [
+        "Only in production"
+      ],
+      "document_sections": [
+        "Only in extension"
+      ]
+    },
+    "column_differences": {},
+    "function_conflicts": {
+      "match_chunks": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "parameter_differences": [
+          "Different parameters: legacy vs production",
+          "  legacy: query_embedding vector(1536",
+          "  production: p_tenant_id UUID,\n    query_embedding vector(1536"
+        ]
+      },
+      "hybrid_search": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "parameter_differences": [
+          "Different parameters: legacy vs production",
+          "  legacy: query_embedding vector(1536",
+          "  production: p_tenant_id UUID,\n    query_embedding vector(1536"
+        ]
+      },
+      "get_document_chunks": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "parameter_differences": [
+          "Different parameters: legacy vs production",
+          "  legacy: doc_id UUID",
+          "  production: p_tenant_id UUID,\n    doc_id UUID"
+        ]
+      },
+      "update_updated_at_column": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "parameter_differences": []
+      }
+    },
+    "extension_differences": {
+      "pg_trgm": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "missing_from": [
+          "extension"
+        ]
+      },
+      "vector": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "missing_from": [
+          "extension"
+        ]
+      },
+      "btree_gin": {
+        "present_in": [
+          "production"
+        ],
+        "missing_from": [
+          "legacy",
+          "extension"
+        ]
+      },
+      "uuid-ossp": {
+        "present_in": [
+          "legacy",
+          "production"
+        ],
+        "missing_from": [
+          "extension"
+        ]
+      }
+    },
+    "consolidation_recommendations": [
+      "🎯 Use schema_with_auth.sql as base (production-ready with multi-tenancy)",
+      "📋 5 tables need consolidation (overlapping definitions)",
+      "🔧 Standardize extensions across all schemas",
+      "⚙️ Resolve function parameter conflicts for tenant-aware versions"
+    ]
+  }
+}

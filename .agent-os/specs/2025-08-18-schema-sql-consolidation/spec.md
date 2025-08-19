@@ -7,6 +7,7 @@
 ## Overview
 
 Consolidare i tre file di schema SQL esistenti (schema.sql legacy, schema_with_auth.sql production, section_tracking_schema.sql extension) in un singolo schema unificato e definire strategia di migrazione chiara. Questo elimina confusione nella gestione database, riduce maintenance overhead e garantisce coerenza tra ambienti development e production.
+seguire `modern-setup.md` (.agent-os\instructions\project\modern-setup.md) per la generazione di comandi terminale powershell.
 
 ## User Stories
 
