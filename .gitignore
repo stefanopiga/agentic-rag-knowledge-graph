@@ -2,6 +2,7 @@ documents
 venv
 venv_linux
 .env
+.env.production
 .claude
 .pytest_cache
 examples
@@ -197,3 +198,4 @@ secrets/
 *.pem
 *.crt
 node_modules
+".env.railway.local" 
